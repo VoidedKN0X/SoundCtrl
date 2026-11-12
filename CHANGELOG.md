@@ -4,6 +4,12 @@ What changed in each SoundCtrl release. Every release on the [Releases page](htt
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.1.1 (2026-11-12)
+
+### Fixed
+
+- **The Devices screen no longer sits under the status bar**, so the profile picture (and Settings behind it) can be tapped again.
+
 ## v0.1.0 (2026-11-12)
 
 The first release of SoundCtrl: one private app for JBL headphones, earbuds and speakers, in place of JBL Headphones and JBL Portable. Not tested on a real JBL device yet; reports are welcome.
