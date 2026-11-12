@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Shell texts for this app -->
+    <string name="settings_subtitle">Connecting and privacy</string>
+    <string name="app_lock_subtitle">Ask for an app PIN (and optionally your fingerprint) when opening SoundCtrl. A firmware update that\'s running keeps going.</string>
+    <string name="app_lock_footer">SoundCtrl has no analytics, tracking or account. It goes online only when you tap Check for update, and then only to Harman\'s public file server with your device\'s product id. Your device list stays on this phone.</string>
+    <string name="lock_prompt_subtitle">Your JBL devices</string>
+    <string name="lock_forgot_body">The PIN can\'t be recovered. SoundCtrl will forget its list of devices, reset its settings and turn the app lock off. Nothing on your headphones or speakers changes.</string>
+
+    <!-- Devices -->
+    <string name="devices">Devices</string>
+    <string name="your_devices">Your devices</string>
+    <string name="nearby">Nearby</string>
+    <string name="scan">Look for devices</string>
+    <string name="scanning">Looking…</string>
+    <string name="nearby_footer">Turn your JBL device on. Headphones already paired with this phone show up straight away; speakers and earbuds need to be switched on and close by.</string>
+    <string name="no_devices">No devices yet</string>
+    <string name="no_devices_body">Tap Look for devices to find JBL headphones, earbuds and speakers near you.</string>
+    <string name="paired_on_phone">Paired with this phone</string>
+    <string name="unknown_model">Model not recognised</string>
+    <string name="bt_permission_title">Allow nearby devices</string>
+    <string name="bt_permission_body">SoundCtrl needs the Nearby devices permission to find and talk to your JBL devices over Bluetooth. It is never used to work out where you are.</string>
+    <string name="bt_permission_action">Allow</string>
+    <string name="bt_permission_settings">Open app settings</string>
+    <string name="bt_off_title">Bluetooth is off</string>
+    <string name="bt_off_body">Turn Bluetooth on to find and control your devices.</string>
+    <string name="bt_off_action">Turn on Bluetooth</string>
+
+    <!-- Device -->
+    <string name="connecting">Connecting…</string>
+    <string name="connect_failed">Couldn\'t connect</string>
+    <string name="connect_failed_body">Make sure the device is on, close by and not connected to the JBL app on another phone, then try again.</string>
+    <string name="try_again">Try again</string>
+    <string name="connected">Connected</string>
+    <string name="not_connected">Not connected</string>
+    <string name="refresh">Refresh</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="forget">Forget this device</string>
+    <string name="forget_title">Forget this device?</string>
+    <string name="forget_body">SoundCtrl removes it from its list. The device itself and its pairing with this phone are not changed.</string>
+    <string name="model">Model</string>
+    <string name="product_id">Product id</string>
+    <string name="firmware">Firmware</string>
+    <string name="firmware_partner">Firmware (other earbud)</string>
+    <string name="firmware_case">Firmware (case)</string>
+    <string name="battery">Battery</string>
+    <string name="battery_left">Left</string>
+    <string name="battery_right">Right</string>
+    <string name="battery_case">Case</string>
+    <string name="percent">%1$d %%</string>
+    <string name="percent_charging">%1$d %% · charging</string>
+    <string name="not_reported">Not reported</string>
+    <string name="needs_confirming">Needs confirming on your device</string>
+    <string name="needs_confirming_footer">Rows marked \"Needs confirming on your device\" are switched off: the exact bytes for this model couldn\'t be established from the JBL apps, and SoundCtrl never sends guessed commands.</string>
+    <string name="setting_failed">The device didn\'t accept that</string>
+    <string name="busy_updating">Settings are locked while the firmware is updated</string>
+
+    <string name="group_sound">Sound</string>
+    <string name="noise_control">Noise control</string>
+    <string name="noise_off">Off</string>
+    <string name="noise_anc">Noise cancelling</string>
+    <string name="noise_ambient">Ambient Aware</string>
+    <string name="noise_talkthru">TalkThru</string>
+    <string name="anc">Noise cancelling</string>
+    <string name="ambient_talkthru">Ambient Aware and TalkThru</string>
+    <string name="eq_presets">EQ presets</string>
+    <string name="eq_custom">Custom EQ</string>
+    <string name="eq_mode">Sound mode</string>
+    <string name="eq_indoor">Indoor</string>
+    <string name="eq_outdoor">Outdoor</string>
+
+    <string name="group_controls">Controls</string>
+    <string name="gestures">Touch and button gestures</string>
+    <string name="gesture_left_swipe_fwd">Left · swipe forward</string>
+    <string name="gesture_left_swipe_back">Left · swipe back</string>
+    <string name="gesture_right_swipe_fwd">Right · swipe forward</string>
+    <string name="gesture_right_swipe_back">Right · swipe back</string>
+    <string name="gesture_left_tap">Left · tap</string>
+    <string name="gesture_left_double">Left · double tap</string>
+    <string name="gesture_left_triple">Left · triple tap</string>
+    <string name="gesture_right_tap">Right · tap</string>
+    <string name="gesture_right_double">Right · double tap</string>
+    <string name="gesture_right_triple">Right · triple tap</string>
+    <string name="gesture_left_hold">Left · tap and hold</string>
+    <string name="gesture_left_double_hold">Left · double tap and hold</string>
+    <string name="gesture_right_hold">Right · tap and hold</string>
+    <string name="gesture_right_double_hold">Right · double tap and hold</string>
+    <string name="action_unknown">Other (%1$d)</string>
+    <string name="action_0">Nothing</string>
+    <string name="action_1">Volume up</string>
+    <string name="action_2">Volume down</string>
+    <string name="action_3">Ambient Aware</string>
+    <string name="action_4">TalkThru</string>
+    <string name="action_5">Next track</string>
+    <string name="action_6">Previous track</string>
+    <string name="action_7">Noise cancelling</string>
+    <string name="action_8">Play / pause</string>
+    <string name="action_9">Noise cancelling / Ambient / off</string>
+    <string name="action_11">Noise cancelling / Ambient</string>
+    <string name="action_12">Noise cancelling / off</string>
+    <string name="action_13">Ambient / off</string>
+    <string name="action_15">TalkThru / off</string>
+
+    <string name="group_device">Device</string>
+    <string name="auto_off">Auto power-off</string>
+    <string name="auto_off_never">Off</string>
+    <string name="minutes">%1$d min</string>
+    <string name="voice_prompts">Voice prompts</string>
+    <string name="voice_prompts_sub">Spoken prompts; when off the device plays tones only</string>
+    <string name="feedback_tone">Feedback tones</string>
+    <string name="rename">Rename</string>
+    <string name="rename_title">Rename device</string>
+    <string name="rename_sub">Up to 16 characters</string>
+    <string name="identify">Find this speaker</string>
+    <string name="identify_sub">Plays a sound or flashes the lights</string>
+
+    <string name="group_party">Party and stereo</string>
+    <string name="partyboost">PartyBoost</string>
+    <string name="partyboost_sub">Link this speaker with other PartyBoost speakers</string>
+    <string name="auracast">Auracast</string>
+    <string name="auracast_sub">Share sound with other Auracast speakers</string>
+    <string name="auracast_groups">Auracast stereo groups</string>
+    <string name="channel">Channel</string>
+    <string name="channel_both">Both (stereo)</string>
+    <string name="channel_left">Left</string>
+    <string name="channel_right">Right</string>
+
+    <string name="group_firmware">Firmware</string>
+    <string name="firmware_update">Firmware update</string>
+    <string name="firmware_update_sub">Check, download and install</string>
+    <string name="model_not_supported">SoundCtrl can\'t control this model yet</string>
+    <string name="model_not_supported_body">It\'s on the JBL apps\' list, but the way it is controlled couldn\'t be established. Battery and firmware may still show.</string>
+
+    <!-- Update -->
+    <string name="update_title">Firmware update</string>
+    <string name="installed">Installed</string>
+    <string name="check_update">Check for update</string>
+    <string name="check_explain">One anonymous request to Harman\'s public file server (%1$s) with only the product id %2$s. Nothing else about you or the device is sent.</string>
+    <string name="no_update_source">Harman\'s server has no update file for this model.</string>
+    <string name="checking">Checking…</string>
+    <string name="update_available">Version %1$s is available</string>
+    <string name="update_not_newer">Version %1$s is on the server; it isn\'t newer than yours</string>
+    <string name="update_cant_compare">Version %1$s is on the server</string>
+    <string name="download">Download</string>
+    <string name="downloading">Downloading… %1$d %%</string>
+    <string name="ready">Version %1$s downloaded and checked (MD5 matches)</string>
+    <string name="ready_file">Your file, version %1$s, checked (MD5 matches)</string>
+    <string name="use_file">Use a firmware file</string>
+    <string name="use_file_sub">You must also give its MD5 and version</string>
+    <string name="file_md5">MD5 of the file (32 characters)</string>
+    <string name="file_version">Firmware version, for example 1.2.3</string>
+    <string name="file_check">Check file</string>
+    <string name="file_unreadable">Couldn\'t read that file</string>
+    <string name="install">Install</string>
+    <string name="sending">Sending to the device… %1$d %%</string>
+    <string name="sending_body">Keep the device on and close to the phone. You can stop; the device keeps what it has received and continues from there next time.</string>
+    <string name="abort">Stop</string>
+    <string name="update_done">Sent. The device installs the update and restarts by itself; this can take a few minutes. Then reconnect to see the new version.</string>
+    <string name="update_cancelled">Stopped. The device keeps its current firmware.</string>
+    <string name="failed_no_source">No update file is published for this model.</string>
+    <string name="failed_network">Couldn\'t reach Harman\'s file server.</string>
+    <string name="failed_answer">The server\'s answer couldn\'t be read.</string>
+    <string name="failed_md5">The MD5 doesn\'t match: the file is damaged or not the one described. Nothing was sent to the device.</string>
+    <string name="failed_transfer">The update stopped: %1$s</string>
+    <string name="write_not_available">Update from this app isn\'t available for this model yet</string>
+    <string name="write_not_available_body">SoundCtrl can read the firmware version and check Harman\'s server, but the way this chip family takes new firmware isn\'t fully established, so SoundCtrl doesn\'t send anything to it. Use the JBL app for this update.</string>
+    <string name="block_not_newer">Only newer firmware can be installed.</string>
+    <string name="block_unknown_version">The device\'s or the file\'s version couldn\'t be read, so SoundCtrl can\'t make sure the update is newer.</string>
+    <string name="block_battery">Charge the device to at least %1$d %% first.</string>
+    <string name="block_playing">Stop playing music first; the device must be idle.</string>
+    <string name="block_grouped">Leave PartyBoost, Auracast or stereo first.</string>
+    <string name="confirm_title">Install firmware %1$s?</string>
+    <string name="confirm_body">Firmware writing in SoundCtrl has NOT been tested on a real device yet. It follows the update protocol of the JBL app as closely as it could be established, and the device checks the image before switching to it, but a failed update could leave the device needing JBL\'s app or service to recover. Continue only if you accept that risk.\n\nKeep the device on, charged and close to the phone until it finishes.</string>
+    <string name="confirm_install">Install anyway</string>
+    <string name="update_untested">Not tested on a real device yet</string>
+
+    <!-- Notification -->
+    <string name="ch_update">Firmware update</string>
+    <string name="ch_update_desc">Shows while SoundCtrl sends firmware to a device</string>
+    <string name="notif_updating">Updating firmware</string>
+    <string name="notif_updating_body">%1$d %% sent</string>
+
+    <!-- Settings -->
+    <string name="group_connecting">Connecting</string>
+    <string name="auto_connect">Reconnect to the last device</string>
+    <string name="auto_connect_sub">When SoundCtrl opens</string>
+    <string name="forget_all">Forget all devices</string>
+    <string name="forget_all_body">SoundCtrl removes every device from its list. Nothing on the devices changes.</string>
+    <string name="connecting_footer">SoundCtrl talks to one device at a time over Bluetooth Low Energy. Product pictures, PersoniFi, JBL accounts and Harman\'s cloud are not part of SoundCtrl.</string>
+</resources>
