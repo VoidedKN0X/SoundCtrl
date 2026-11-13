@@ -4,6 +4,19 @@ What changed in each SoundCtrl release. Every release on the [Releases page](htt
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.1.2 (2026-11-13)
+
+A security and maintenance release. Nothing changes in how you use SoundCtrl.
+
+### Security
+
+- **Stricter handling of what a headphone or speaker sends.** Packets that don't belong together (a piece of another reply, or one whose first part went missing) are now thrown away instead of being glued into one message, so a garbled Bluetooth connection can't make SoundCtrl misread a setting or an update notice.
+- The build tool download is now checked against its published checksum.
+
+### Performance
+
+- Updated Jetpack Compose, AndroidX and Kotlin libraries to their current versions.
+- Release builds drop debug logging.
 ## v0.1.1 (2026-11-12)
 
 ### Fixed

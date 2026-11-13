@@ -92,6 +92,8 @@ class P4Message(val cmd: Int, val status: Int?, val payload: ByteArray)
 class P4Assembler {
     private val parts = sortedMapOf<Int, ByteArray>()
     private var status: Int? = null
+    private var expected = -1
+    private var expectedCmd = -1
 
     fun accept(b: ByteArray): P4Message? {
         if (b.size < 8 || b[0] != 0x00.toByte() || b[1] != 0xDD.toByte()) return null
@@ -101,9 +103,18 @@ class P4Assembler {
         val len = b.u16le(6)
         if (len != b.size - 8) return null
         if (cmd == P4.OTA_NOTIFICATION) return P4Message(cmd, null, b.copyOfRange(8, b.size))
+        // A packet that can't belong to the message (index past the count) is dropped.
+        if (count == 0 || index >= count) return null
         if (index == 0) {
             parts.clear()
             status = null
+            expected = count
+            expectedCmd = cmd
+        } else if (count != expected || cmd != expectedCmd) {
+            // A packet of another message, or one whose first packet was lost: start over.
+            parts.clear()
+            expected = -1
+            return null
         }
         val body = if (index == 0 && b.size >= 10) {
             status = b.u16le(8)
@@ -115,6 +126,7 @@ class P4Assembler {
         if (parts.size < count) return null
         val all = parts.values.fold(ByteArray(0)) { acc, p -> acc + p }
         parts.clear()
+        expected = -1
         return P4Message(cmd, status, all)
     }
 }

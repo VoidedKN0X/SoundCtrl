@@ -50,7 +50,7 @@ object UpdateServer {
      * the image next to the config file.
      */
     fun parseJson(p: Product, body: String): Offer? {
-        val o = try { json.parseToJsonElement(body.trim().trimStart('﻿')).jsonObject } catch (_: Exception) { return null }
+        val o = try { json.parseToJsonElement(body.trim().trimStart('\uFEFF')).jsonObject } catch (_: Exception) { return null }
         val fw = o["firmware"] as? JsonObject
         if (fw != null) {
             val pid = o.str("pid")
