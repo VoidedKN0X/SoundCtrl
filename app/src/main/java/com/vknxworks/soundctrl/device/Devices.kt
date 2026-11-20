@@ -100,7 +100,13 @@ class Devices(private val context: Context, private val scope: CoroutineScope) {
             val product = Catalog.find(adv?.pid)
             val name = rec.deviceName ?: r.device.name ?: product?.name ?: return
             val f = Found(r.device.address, name, adv?.pid, le = true, rssi = r.rssi)
-            _found.update { list -> (list.filter { it.address != f.address } + f).sortedBy { it.name } }
+            _found.update { list ->
+                val old = list.firstOrNull { it.address == f.address }
+                // Signal strength isn't shown anywhere: an advertisement that changes nothing else keeps the list
+                // as it is, so the screen isn't redrawn for every packet during a scan.
+                if (old != null && old.copy(rssi = f.rssi) == f) list
+                else (list.filter { it.address != f.address } + f).sortedBy { it.name }
+            }
         }
     }
 

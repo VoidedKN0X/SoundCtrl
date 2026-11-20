@@ -45,7 +45,7 @@ object FileServer {
                 if (code != HttpURLConnection.HTTP_OK) throw IOException("HTTP $code")
                 val total = c.contentLengthLong
                 if (total > max) throw Refused("file too large")
-                val out = ByteArrayOutputStream(if (total > 0) total.toInt() else 64 * 1024)
+                val out = ExactBuffer(if (total > 0) total.toInt() else 64 * 1024)
                 c.inputStream.use { input ->
                     val buf = ByteArray(16 * 1024)
                     while (true) {
@@ -57,11 +57,20 @@ object FileServer {
                         if (total > 0) progress(out.size().toFloat() / total)
                     }
                 }
-                return@withContext out.toByteArray()
+                return@withContext out.bytes()
             } finally {
                 c.disconnect()
             }
         }
         throw IOException("too many redirects")
+    }
+
+    /**
+     * Collects a download. When the server said how big the file is, the buffer is made exactly that size and is
+     * handed over as it is once full, so a large firmware image isn't held in memory twice. The bytes are the same
+     * either way.
+     */
+    private class ExactBuffer(size: Int) : ByteArrayOutputStream(size) {
+        fun bytes(): ByteArray = if (count == buf.size) buf else toByteArray()
     }
 }

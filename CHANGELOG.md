@@ -4,6 +4,16 @@ What changed in each SoundCtrl release. Every release on the [Releases page](htt
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+Not released yet: these changes are built but have no version number. SoundCtrl still hasn't been tested on a real JBL device, and nothing here changes what is sent to a headphone or speaker.
+
+### Performance
+
+- **A downloaded firmware file is no longer held in memory twice.** When Harman's server says how big the file is, SoundCtrl now reads it into a buffer of exactly that size and uses that buffer as it is, instead of copying it once more when the download ends (up to 64 MB less memory at that moment). The downloaded bytes, the MD5 check and the transfer are unchanged.
+- **The update notification is refreshed only when the percentage changes.** During a transfer the device asks for data many times a second, and the notification was posted again for every request. It now changes once per whole percent, which is all it ever showed.
+- **Scanning redraws less.** While looking for devices, an advert that only differs in signal strength (which SoundCtrl doesn't show) no longer rebuilds and re-sorts the list of nearby devices.
+
 ## v0.1.2 (2026-11-13)
 
 A security and maintenance release. Nothing changes in how you use SoundCtrl.

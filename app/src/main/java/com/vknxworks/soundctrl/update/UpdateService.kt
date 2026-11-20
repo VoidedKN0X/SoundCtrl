@@ -43,9 +43,18 @@ class UpdateService : Service() {
         }
         val updater = container.updater
         scope.launch {
+            // The device asks for data many times a second; the notification only shows whole percents, so it is
+            // posted again only when that number changes.
+            var shownPct = -1
             updater.step.collect { s ->
                 when (s) {
-                    is UpdateStep.Sending -> getSystemService(NotificationManager::class.java).notify(ID, build(s.sent, s.total))
+                    is UpdateStep.Sending -> {
+                        val pct = if (s.total > 0) (s.sent * 100 / s.total).toInt() else -2
+                        if (pct != shownPct) {
+                            shownPct = pct
+                            getSystemService(NotificationManager::class.java).notify(ID, build(s.sent, s.total))
+                        }
+                    }
                     else -> {
                         stopForeground(STOP_FOREGROUND_REMOVE)
                         stopSelf()
