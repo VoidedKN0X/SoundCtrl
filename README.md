@@ -124,7 +124,7 @@ Turn the app lock on under **Settings > Privacy and security > App lock**. It's 
 
 - **Online only on request.** The only network traffic is **Check for update** and the firmware download, both when you tap them, both to Harman's public file server over HTTPS. The request contains only the model's product id. In code, SoundCtrl refuses every host except `storage.harman.com` and `appstorage.onecloud.harman.com`, allows HTTPS only, trusts only the phone's system certificates and follows redirects only within those two hosts. CI checks that the APK has no other network or location permission.
 - **Bluetooth only for your devices.** Scanning looks only for JBL adverts (Harman's Bluetooth company ids and service data) and paired devices whose name contains "JBL". The scan permission is flagged "never for location".
-- **Stays on the phone:** the list of your devices (name, Bluetooth address, model, last firmware and battery) and the settings live in SoundCtrl's private storage. Android backups don't include them, and SoundCtrl is left out of Android's cloud backup and its phone-to-phone transfer.
+- **Stays on the phone:** the list of your devices (name, Bluetooth address, model, last firmware and battery) and the settings live in SoundCtrl's private storage. The device list is also encrypted there (AES-256-GCM, with a key protected by the phone's secure hardware); the settings are not. Android backups don't include them, and SoundCtrl is left out of Android's cloud backup and its phone-to-phone transfer.
 - **No JBL cloud:** no sign-in, no PersoniFi, no product pictures, no app configuration downloaded from Harman.
 - The Support, Report a bug, Source code and Licence links on the You page open in your browser, only when you tap them.
 

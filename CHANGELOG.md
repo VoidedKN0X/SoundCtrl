@@ -4,6 +4,24 @@ What changed in each SoundCtrl release. Every release on the [Releases page](htt
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+Built and checked by CI only: nothing in this section has been run on a phone, and SoundCtrl has never been tried with a real JBL device.
+
+### Privacy
+
+- **The list of your devices is now encrypted on the phone.** The devices SoundCtrl remembers (name, Bluetooth address, model, last firmware and battery levels) used to sit as readable text in the settings file. They now live in their own file, `devices.json` in SoundCtrl's private storage, sealed with AES-256-GCM under a random 256-bit data key. The data key is stored next to it in `data.key`, itself encrypted by a key in the phone's secure hardware (Android Keystore, StrongBox when the phone has it) that can't be exported and needs no fingerprint or PIN. This protects the list in a copy of SoundCtrl's files taken off the phone; it does not protect against someone who can run code as SoundCtrl on the unlocked phone, and it is independent of the app lock.
+- **Your existing list is moved, not rebuilt.** The first time this version starts, the list is copied from the settings file into the new file, read back from storage, decrypted and compared; only when it matches is the old readable copy removed from the settings file. If anything in that fails, the old copy stays and SoundCtrl tries again at the next start. If the phone has no usable secure hardware key, the list is kept as an ordinary file instead and is sealed once a key is available.
+- **If the encrypted list can't be opened** (for example the secure hardware key is gone), SoundCtrl shows an empty device list, as on a new install, and leaves the file alone. When you connect a device again, the unreadable file is renamed to `devices.json.unreadable` (not deleted) and a new list is started. Nothing about a device is lost: the list only holds what the device itself reports, so **Look for devices** and connecting bring it back.
+- **Not encrypted, on purpose:** the settings (open the last device, app lock timing, hide in screenshots and recents) are plain preferences with nothing about your devices in them. The app lock's own storage was already protected and is unchanged. Firmware images are never stored: a downloaded or picked image is held in memory only for the transfer.
+- **No going back to an older version with the list intact:** SoundCtrl 0.1.3 and older look for the list in the settings file and will show no remembered devices. Connecting a device again adds it back.
+- Nothing about Bluetooth, the device protocols or firmware updates was changed.
+
+### Changed
+
+- The device list is read on a background thread when SoundCtrl starts. The first screen waits for it before it decides there are no remembered devices, so it no longer starts a scan or shows "No devices" for a moment while the list is still loading.
+- Saving the list is skipped when nothing in it changed.
+
 ## v0.1.3 (2026-11-20)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published. It has also never been tried with a real JBL device.

@@ -105,7 +105,9 @@ private fun DeviceLists(tick: Int, onOpen: (String, String?, Boolean) -> Unit) {
     val scanning by c.devices.scanning.collectAsStateWithLifecycle()
     val settings by c.settings.settings.collectAsStateWithLifecycle()
     var autoTried by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(tick) { if (remembered.isEmpty() && found.isEmpty()) c.devices.scan() }
+    // The stored list is read (and decrypted) in the background: wait for it before deciding it's empty.
+    val loaded by c.devices.loaded.collectAsStateWithLifecycle()
+    LaunchedEffect(tick, loaded) { if (loaded && c.devices.remembered.value.isEmpty() && found.isEmpty()) c.devices.scan() }
     LaunchedEffect(remembered) {
         val last = remembered.firstOrNull()
         if (!autoTried && settings.autoConnect && last != null && c.devices.session.value == null) {
@@ -121,7 +123,7 @@ private fun DeviceLists(tick: Int, onOpen: (String, String?, Boolean) -> Unit) {
         }
         val nearby = found.filter { f -> remembered.none { it.address == f.address } }
         Group(stringResource(R.string.nearby), footer = stringResource(R.string.nearby_footer)) {
-            if (remembered.isEmpty() && nearby.isEmpty() && !scanning) {
+            if (loaded && remembered.isEmpty() && nearby.isEmpty() && !scanning) {
                 GroupRow(stringResource(R.string.no_devices), stringResource(R.string.no_devices_body), icon = Icons.Outlined.Headphones)
             }
             nearby.forEach { f -> FoundRow(f) { onOpen(f.address, f.pid, f.le) } }
