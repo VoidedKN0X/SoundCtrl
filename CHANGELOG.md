@@ -4,9 +4,9 @@ What changed in each SoundCtrl release. Every release on the [Releases page](htt
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
-## Unreleased
+## v0.1.3 (2026-11-20)
 
-Not released yet: these changes are built but have no version number. SoundCtrl still hasn't been tested on a real JBL device, and nothing here changes what is sent to a headphone or speaker.
+Built and checked by CI only: nothing in this release had been run on a phone when it was published. It has also never been tried with a real JBL device.
 
 ### Performance
 
