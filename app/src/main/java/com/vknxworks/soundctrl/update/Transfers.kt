@@ -1,5 +1,7 @@
 package com.vknxworks.soundctrl.update
 
+import com.vknxworks.soundctrl.R
+
 import com.vknxworks.soundctrl.device.DeviceSession
 import com.vknxworks.soundctrl.proto.Aa
 import com.vknxworks.soundctrl.proto.AaFrame
@@ -20,7 +22,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
-class TransferFailed(msg: String) : Exception(msg)
+/** A firmware transfer that stopped; [text] (with [args]) says why, in the phone's language. */
+class TransferFailed(@androidx.annotation.StringRes val text: Int, vararg val args: Any) : Exception("transfer failed")
 
 /** Progress callback: bytes the device has confirmed, image size. */
 typealias Progress = (Long, Long) -> Unit
@@ -37,14 +40,14 @@ object SpeakerAaTransfer {
             session.aaFrames.collect { if (it.cmd == Aa.RET_DFU_STATUS || it.cmd == Aa.RET_TRIGGER_UPDATE) inbox.send(it) }
         }
         try {
-            if (!session.link.write(SpeakerDfuCommands.start(crc, image.size, version, resume))) throw TransferFailed("couldn't start")
+            if (!session.link.write(SpeakerDfuCommands.start(crc, image.size, version, resume))) throw TransferFailed(R.string.xfer_couldnt_start)
             var silent = 0
             while (true) {
                 val f = withTimeoutOrNull(6_000) { inbox.receive() }
                 if (f == null) {
                     // No answer: send the last packet again a few times (inferred; the app's command timeout is 6 s).
-                    val last = dfu.lastSent ?: throw TransferFailed("the speaker didn't answer")
-                    if (++silent > 5) throw TransferFailed("the speaker stopped answering")
+                    val last = dfu.lastSent ?: throw TransferFailed(R.string.xfer_no_answer)
+                    if (++silent > 5) throw TransferFailed(R.string.xfer_stopped_answering)
                     session.link.write(last.frame)
                     continue
                 }
@@ -52,23 +55,23 @@ object SpeakerAaTransfer {
                 if (f.cmd != Aa.RET_DFU_STATUS) continue
                 when (val a = dfu.onStatus(f.payload)) {
                     is DfuAction.Send -> {
-                        if (!session.link.write(a.frame)) throw TransferFailed("Bluetooth write failed")
+                        if (!session.link.write(a.frame)) throw TransferFailed(R.string.xfer_write_failed)
                         progress(a.offset, a.total)
                     }
                     DfuAction.Ignore -> {}
-                    is DfuAction.Failed -> throw TransferFailed(a.reason)
+                    is DfuAction.Failed -> throw if (a.reason.startsWith("speaker asked")) TransferFailed(R.string.xfer_same_packet, SpeakerDfuSession.MAX_REPEATS) else TransferFailed(R.string.xfer_speaker_error)
                     DfuAction.TransferDone -> break
                 }
             }
             progress(image.size.toLong(), image.size.toLong())
             // Apply: AA 4D -> AA 4C [code], 0 = accepted.
-            if (!session.link.write(SpeakerDfuCommands.applyNewFirmware())) throw TransferFailed("couldn't ask the speaker to apply the update")
+            if (!session.link.write(SpeakerDfuCommands.applyNewFirmware())) throw TransferFailed(R.string.xfer_apply_failed)
             val reply = withTimeoutOrNull(15_000) {
                 var r: AaFrame
                 do { r = inbox.receive() } while (r.cmd != Aa.RET_TRIGGER_UPDATE)
                 r
             }
-            if (reply != null && reply.payload.isNotEmpty() && reply.payload.u8(0) != 0) throw TransferFailed("the speaker refused the new firmware (code ${reply.payload.u8(0)})")
+            if (reply != null && reply.payload.isNotEmpty() && reply.payload.u8(0) != 0) throw TransferFailed(R.string.xfer_refused, reply.payload.u8(0))
         } catch (e: CancellationException) {
             withContext(NonCancellable) { session.link.write(SpeakerDfuCommands.cancel()) }
             throw e
@@ -84,19 +87,19 @@ object P4Transfer {
         val mtu = session.link.mtu
         // Speaker app: 240 bytes per packet over BLE; headphone app: MTU - 17. Both kept within the MTU.
         val chunk = if (speaker) minOf(240, mtu - 15) else mtu - 17
-        if (chunk < 20) throw TransferFailed("Bluetooth packet size too small (MTU $mtu)")
+        if (chunk < 20) throw TransferFailed(R.string.xfer_mtu_small, mtu)
         val inbox = Channel<P4OtaNotice>(Channel.UNLIMITED)
         val reader = launch(start = CoroutineStart.UNDISPATCHED) {
             session.p4Messages.collect { m -> if (m.cmd == P4.OTA_NOTIFICATION) P4OtaNotice.parse(m.payload)?.let { inbox.send(it) } }
         }
         try {
             val start = if (speaker) P4.speakerStartOta(image.size) else P4.headphoneStartOta()
-            if (!session.link.write(start)) throw TransferFailed("couldn't start")
+            if (!session.link.write(start)) throw TransferFailed(R.string.xfer_couldnt_start)
             var previous = -1L
             while (true) {
-                val n = withTimeoutOrNull(30_000) { inbox.receive() } ?: throw TransferFailed("the device stopped asking for data")
+                val n = withTimeoutOrNull(30_000) { inbox.receive() } ?: throw TransferFailed(R.string.xfer_stopped_asking)
                 if (if (speaker) n.speakerFinished else n.headphoneFinished) break
-                if (previous > 0 && n.offset == 0L) throw TransferFailed("the device reported an error (status ${n.status})")
+                if (previous > 0 && n.offset == 0L) throw TransferFailed(R.string.xfer_device_error, n.status)
                 previous = n.offset
                 if (n.offset >= image.size) continue
                 // Headphones say how much they want (up to 20 packets); speakers get one packet per request.
@@ -105,7 +108,7 @@ object P4Transfer {
                 val end = minOf(image.size.toLong(), n.offset + want)
                 while (off < end) {
                     val to = minOf(end, off + chunk)
-                    if (!session.link.write(P4.otaData(off, image.copyOfRange(off.toInt(), to.toInt())))) throw TransferFailed("Bluetooth write failed")
+                    if (!session.link.write(P4.otaData(off, image.copyOfRange(off.toInt(), to.toInt())))) throw TransferFailed(R.string.xfer_write_failed)
                     off = to
                 }
                 progress(n.offset, image.size.toLong())

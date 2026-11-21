@@ -172,6 +172,18 @@
     <string name="confirm_title">Install firmware %1$s?</string>
     <string name="confirm_body">Firmware writing in SoundCtrl has NOT been tested on a real device yet. It follows the update protocol of the JBL app as closely as it could be established, and the device checks the image before switching to it, but a failed update could leave the device needing JBL\'s app or service to recover. Continue only if you accept that risk.\n\nKeep the device on, charged and close to the phone until it finishes.</string>
     <string name="confirm_install">Install anyway</string>
+    <string name="xfer_couldnt_start">couldn\'t start</string>
+    <string name="xfer_no_answer">the speaker didn\'t answer</string>
+    <string name="xfer_stopped_answering">the speaker stopped answering</string>
+    <string name="xfer_write_failed">Bluetooth write failed</string>
+    <string name="xfer_apply_failed">couldn\'t ask the speaker to apply the update</string>
+    <string name="xfer_refused">the speaker refused the new firmware (code %1$d)</string>
+    <string name="xfer_mtu_small">Bluetooth packet size too small (MTU %1$d)</string>
+    <string name="xfer_stopped_asking">the device stopped asking for data</string>
+    <string name="xfer_device_error">the device reported an error (status %1$d)</string>
+    <string name="xfer_same_packet">the speaker asked for the same packet %1$d times</string>
+    <string name="xfer_speaker_error">the speaker reported an error</string>
+    <string name="xfer_not_supported">not supported</string>
     <string name="update_untested">Not tested on a real device yet</string>
 
     <!-- Notification -->

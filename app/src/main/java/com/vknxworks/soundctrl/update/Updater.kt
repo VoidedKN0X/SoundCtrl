@@ -1,5 +1,7 @@
 package com.vknxworks.soundctrl.update
 
+import com.vknxworks.soundctrl.R
+
 import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
@@ -170,13 +172,14 @@ class Updater(private val context: Context, private val scope: CoroutineScope) {
                     UpdateFamily.SPEAKER_AA -> SpeakerAaTransfer.run(session, data, version, progress)
                     UpdateFamily.SPEAKER_P4 -> P4Transfer.run(session, data, speaker = true, progress)
                     UpdateFamily.HP_P4 -> P4Transfer.run(session, data, speaker = false, progress)
-                    else -> throw TransferFailed("not supported")
+                    else -> throw TransferFailed(R.string.xfer_not_supported)
                 }
                 _step.value = UpdateStep.Done
             } catch (e: CancellationException) {
                 _step.value = UpdateStep.Cancelled
             } catch (e: Exception) {
-                _step.value = UpdateStep.Failed(Reason.TRANSFER, e.message)
+                val detail = if (e is TransferFailed) context.getString(e.text, *e.args) else e.message
+                _step.value = UpdateStep.Failed(Reason.TRANSFER, detail)
             } finally {
                 session.updating = false
             }
