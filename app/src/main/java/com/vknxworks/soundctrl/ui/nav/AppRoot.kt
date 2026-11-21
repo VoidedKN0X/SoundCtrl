@@ -14,6 +14,7 @@ import androidx.navigation.toRoute
 import com.vknxworks.soundctrl.ui.device.DeviceScreen
 import com.vknxworks.soundctrl.ui.device.DevicesScreen
 import com.vknxworks.soundctrl.ui.device.UpdateScreen
+import com.vknxworks.soundctrl.ui.settings.ProtocolLogScreen
 import com.vknxworks.soundctrl.ui.settings.SettingsScreen
 import com.vknxworks.soundctrl.ui.settings.YouScreen
 
@@ -30,6 +31,7 @@ fun AppRoot() {
                 composable<UpdateRoute> { UpdateScreen(it.toRoute<UpdateRoute>().address) }
                 composable<YouRoute> { YouScreen() }
                 composable<SettingsRoute> { SettingsScreen() }
+                composable<ProtocolLogRoute> { ProtocolLogScreen() }
             }
         }
     }

@@ -4,6 +4,20 @@ What changed in each SoundCtrl release. Every release on the [Releases page](htt
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+Changes on `main` that aren't in a release yet. Built and checked by CI only: none of this has been run on a phone or tried with a real JBL device.
+
+### New
+
+- **Protocol log you can share by hand.** Settings has a new Troubleshooting section with a **Protocol log** switch (off by default). While it's on, every Bluetooth message SoundCtrl sends to your device and gets back is kept, as hex with the time and direction, in memory only: nothing is written to the phone's storage and the log is gone when SoundCtrl closes, when you clear it or when you turn the switch off. **Open protocol log** shows the newest first, and **Share** or **Copy** hands the text (with SoundCtrl's version, the Android version and the device's model, product id and firmware at the top) to an app you choose. SoundCtrl never sends it anywhere itself. Long messages (firmware data) are cut after 48 bytes with their full length noted, and the newest 1,500 messages are kept.
+- **Firmware downloads resume.** When the connection to Harman's file server drops during a firmware download, SoundCtrl now tries again by itself up to three times (after 2, 4 and 6 seconds), each time asking the server only for the part that is still missing (an HTTP `Range` request with `If-Range`, so a file that changed on the server in the meantime is fetched whole rather than glued onto the old part). If it still can't finish, the update page says where it stopped and offers **Resume download**. If the server doesn't support partial downloads, it simply starts over. The part already received stays in memory only (firmware is still never written to disk), so closing SoundCtrl means starting again, and the MD5 check on the finished file is unchanged.
+- **Export and import settings.** Settings has a new Settings file section: **Export settings** saves SoundCtrl's settings (reconnect to the last device, lock timing, hide in screenshots and recent apps, protocol log) as a small JSON file wherever you choose; **Import settings** reads one back, shows exactly which settings will change (old → new) and asks before replacing them. The file never holds your devices, Bluetooth addresses or anything of the app lock. An import can turn Hide in screenshots and Hide in recent apps on but never off, and can make the lock ask sooner but never later.
+
+### Not built
+
+- **Equaliser:** still off. Its commands for your models haven't been confirmed on a real device (see PROTOCOL.md: the EQ structure is known, but presets are sent as a full band curve from per-model tables, plus a calibration value whose formula wasn't pinned). SoundCtrl doesn't send guessed bytes, so the EQ rows keep showing "Needs confirming on your device".
+
 ## v0.2.1 (2026-11-21)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published. It is the first release built with the new build tools (Android Gradle Plugin 9, stricter code shrinking), so update over your installed version and check that your data and settings are still there. It has also never been tried with a real JBL device.

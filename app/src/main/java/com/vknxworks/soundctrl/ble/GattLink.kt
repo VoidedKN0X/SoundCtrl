@@ -78,6 +78,7 @@ class GattLink(private val context: Context, val address: String) {
         }
 
         override fun onCharacteristicChanged(g: BluetoothGatt, c: BluetoothGattCharacteristic, value: ByteArray) {
+            com.vknxworks.soundctrl.device.ProtocolLog.received(value)
             _incoming.tryEmit(value.copyOf())
         }
     }
@@ -130,6 +131,7 @@ class GattLink(private val context: Context, val address: String) {
         val g = gatt ?: return false
         val c = tx ?: return false
         val done = CompletableDeferred<Boolean>().also { pendingWrite = it }
+        com.vknxworks.soundctrl.device.ProtocolLog.sent(bytes)
         val r = g.writeCharacteristic(c, bytes, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT)
         if (r != BluetoothGatt.GATT_SUCCESS) return false
         withTimeoutOrNull(6_000) { done.await() } == true

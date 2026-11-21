@@ -19,7 +19,9 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Headphones and earbuds (2024-2025 models, "protocol 4"):** noise control (off, noise cancelling, Ambient Aware, TalkThru), touch gestures for each tap and swipe the device reports, auto power-off and voice prompts.
 - **Older headphones:** battery, firmware and noise cancelling on/off.
 - **Speakers:** rename, feedback tones, PartyBoost, Auracast on/off, stereo channel (left, right or both), Find (plays a sound), and Indoor/Outdoor sound on the BoomBox.
-- **Firmware update:** **Check for update** asks Harman's public file server for your model; the download is checked against its MD5. You can also install a file you have, if you give its MD5 and version. Only newer firmware is installed, on a charged (50 % or more) and idle device, with progress, Stop and continuing where it stopped.
+- **Firmware update:** **Check for update** asks Harman's public file server for your model; the download is checked against its MD5. You can also install a file you have, if you give its MD5 and version. Only newer firmware is installed, on a charged (50 % or more) and idle device, with progress, Stop and continuing where it stopped. A download that breaks off is retried by itself and can be resumed: only the missing part is fetched again.
+- **Protocol log:** turn it on in Settings to keep the Bluetooth messages SoundCtrl sends and receives (in memory only), then share or copy them by hand, for example for a bug report.
+- **Settings file:** export SoundCtrl's settings to a file and import them again (no devices, no addresses, nothing of the app lock).
 - **Honest about gaps:** anything whose exact commands couldn't be established for your model shows as **Needs confirming on your device** and is switched off. SoundCtrl never sends guessed commands.
 - **App lock** with its own PIN and optional fingerprint unlock, and **Hide in screenshots** / **Hide in recent apps** (all off until you turn them on).
 - **Ctrl / Signal look**, shared by every Ctrl app: dark and light, high contrast, one violet accent, Space Grotesk and JetBrains Mono.
@@ -61,14 +63,14 @@ SoundCtrl knows every model in the JBL apps' own lists (about 160). What it can 
 - **Look for devices:** switch your JBL device on. Headphones already paired with the phone show up straight away. Tap one to connect.
 - **A device:** battery and firmware at the top, then its settings. **Refresh** reads everything again, **Disconnect** frees it for another phone.
 - **Firmware update** (on the device page): **Check for update**, then **Download**, then **Install**. Read the warning first: firmware writing has not been tested on a real device yet.
-- **Settings** (profile picture): reconnect to the last device when SoundCtrl opens, forget devices, and privacy.
+- **Settings** (profile picture): reconnect to the last device when SoundCtrl opens, forget devices, privacy, the protocol log and the settings file.
 
 Close the JBL app on other phones first: a device usually talks to one app at a time.
 
 ## Firmware updates
 
 - **Check for update** sends one anonymous HTTPS request to Harman's public file server (`storage.harman.com` or `appstorage.onecloud.harman.com`). The address contains only your model's product id (for example `…/ota/2101/ota_config.json`). Nothing else about you, your phone or the device is sent.
-- The image is downloaded from the same server and must match the MD5 the server gives. A file you load yourself must match the MD5 you type in, and you give its version, so SoundCtrl can refuse anything that isn't newer.
+- The image is downloaded from the same server and must match the MD5 the server gives. If the connection drops, SoundCtrl tries again by itself up to three times, each time asking only for the part that's still missing (an HTTP range request, with `If-Range` so a file that changed on the server is fetched whole). After that, **Resume download** carries on from where it stopped. The part already received is kept in memory only, never on disk, so closing SoundCtrl starts the download over. A file you load yourself must match the MD5 you type in, and you give its version, so SoundCtrl can refuse anything that isn't newer.
 - Before sending, SoundCtrl checks: the version is newer than the device's, every battery is at 50 % or more, and (speakers) nothing is playing and the speaker isn't in a PartyBoost, Auracast or stereo group.
 - The transfer runs with a notification and can be stopped. The device decides what to ask for next, so after a stop or a dropped connection the next attempt continues where it stopped. The device checks the image (CRC or signature) before it switches to it.
 - **Not tested on a real device yet.** The confirm dialog says so too. If in doubt, use the JBL app for updates until someone has confirmed your model.
@@ -126,6 +128,8 @@ Turn the app lock on under **Settings > Privacy and security > App lock**. It's 
 - **Bluetooth only for your devices.** Scanning looks only for JBL adverts (Harman's Bluetooth company ids and service data) and paired devices whose name contains "JBL". The scan permission is flagged "never for location".
 - **Stays on the phone:** the list of your devices (name, Bluetooth address, model, last firmware and battery) and the settings live in SoundCtrl's private storage. The device list is also encrypted there (AES-256-GCM, with a key protected by the phone's secure hardware); the settings are not. Android backups don't include them, and SoundCtrl is left out of Android's cloud backup and its phone-to-phone transfer.
 - **No JBL cloud:** no sign-in, no PersoniFi, no product pictures, no app configuration downloaded from Harman.
+- **Protocol log:** off by default. When on, the messages to and from your device are kept in memory while SoundCtrl runs and are gone when it closes. SoundCtrl never sends the log anywhere; Share and Copy hand it to an app you pick. It can contain your device's name and serial number.
+- **Settings file:** holds only SoundCtrl's settings. Importing one can make SoundCtrl stricter (hide switches on, a shorter lock time) but never less private, and it never touches the app lock.
 - The Support, Report a bug, Source code and Licence links on the You page open in your browser, only when you tap them.
 
 ## How SoundCtrl is made

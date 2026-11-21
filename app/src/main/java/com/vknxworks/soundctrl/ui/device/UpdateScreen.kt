@@ -121,6 +121,10 @@ fun UpdateScreen(address: String) {
                         if (checked != null && family?.writeSupported == true && checked.newer != false) {
                             CtrlButton(stringResource(R.string.download), { c.updater.download(checked.offer) }, Modifier.fillMaxWidth())
                         }
+                        val interrupted = step as? UpdateStep.Interrupted
+                        if (interrupted != null && family?.writeSupported == true) {
+                            CtrlButton(stringResource(R.string.resume_download), { c.updater.download(interrupted.offer) }, Modifier.fillMaxWidth())
+                        }
                     }
                 }
             }
@@ -193,6 +197,7 @@ private fun StepText(step: UpdateStep) {
             null -> stringResource(R.string.update_cant_compare, step.offer.version)
         }
         is UpdateStep.Downloading -> stringResource(R.string.downloading, (step.progress * 100).toInt())
+        is UpdateStep.Interrupted -> stringResource(R.string.download_interrupted, if (step.total > 0) (step.received * 100 / step.total).toInt() else 0)
         is UpdateStep.Ready -> stringResource(if (step.fromFile) R.string.ready_file else R.string.ready, step.version)
         is UpdateStep.Sending -> null
         UpdateStep.Done -> stringResource(R.string.update_done)
@@ -205,7 +210,7 @@ private fun StepText(step: UpdateStep) {
             else -> stringResource(R.string.failed_transfer, step.detail ?: "")
         }
     }
-    if (text != null) Text(text, color = if (step is UpdateStep.Failed) CtrlColors.Error else CtrlColors.Text)
+    if (text != null) Text(text, color = if (step is UpdateStep.Failed || step is UpdateStep.Interrupted) CtrlColors.Error else CtrlColors.Text)
 }
 
 @Composable

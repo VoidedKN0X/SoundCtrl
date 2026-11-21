@@ -15,6 +15,7 @@ import com.vknxworks.soundctrl.proto.compareVersions
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -25,6 +26,8 @@ sealed interface UpdateStep {
     data object Checking : UpdateStep
     data class Checked(val offer: Offer, val newer: Boolean?) : UpdateStep
     data class Downloading(val progress: Float) : UpdateStep
+    /** The download broke off after [received] of [total] bytes, even after retrying; [resume] carries on from there. */
+    data class Interrupted(val offer: Offer, val received: Long, val total: Long) : UpdateStep
     /** A verified image (MD5 matched), ready to send. */
     data class Ready(val version: String, val size: Int, val fromFile: Boolean) : UpdateStep
     data class Sending(val sent: Long, val total: Long) : UpdateStep
@@ -47,6 +50,8 @@ class Updater(private val context: Context, private val scope: CoroutineScope) {
         private set
 
     private var image: ByteArray? = null
+    /** A download that broke off, kept in memory so it can carry on from where it stopped. */
+    private var partial: PartialImage? = null
     private var imageVersion: String? = null
     private var job: Job? = null
 
@@ -57,6 +62,7 @@ class Updater(private val context: Context, private val scope: CoroutineScope) {
         job?.cancel()
         address = forAddress
         image = null
+        partial = null
         imageVersion = null
         _step.value = UpdateStep.Idle
     }
@@ -76,16 +82,41 @@ class Updater(private val context: Context, private val scope: CoroutineScope) {
         }
     }
 
+    /**
+     * Downloads [offer]'s image. A connection that breaks is retried by itself a few times, each time asking only
+     * for the part that's still missing; if it still fails, [UpdateStep.Interrupted] keeps what arrived and
+     * "Resume download" (calling this again) carries on from there.
+     */
     fun download(offer: Offer) {
         if (running) return
         job?.cancel()
         job = scope.launch {
-            _step.value = UpdateStep.Downloading(0f)
-            val data = try {
-                FileServer.getImage(offer.url) { p -> _step.value = UpdateStep.Downloading(p) }
-            } catch (e: CancellationException) { throw e } catch (e: Exception) {
-                _step.value = UpdateStep.Failed(Reason.NETWORK, e.message); return@launch
+            if (partial?.url != offer.url) partial = null
+            var retries = 0
+            var downloaded: ByteArray? = null
+            while (downloaded == null) {
+                _step.value = UpdateStep.Downloading(partial?.let { it.count.toFloat() / it.total } ?: 0f)
+                try {
+                    downloaded = FileServer.getImageResumable(offer.url, partial) { p -> _step.value = UpdateStep.Downloading(p) }.bytes()
+                    partial = null
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: DownloadInterrupted) {
+                    partial = e.partial
+                    if (retries++ < AUTO_RETRIES) {
+                        delay(RETRY_DELAY_MS * retries)
+                        continue
+                    }
+                    val p = partial
+                    _step.value = if (p != null) UpdateStep.Interrupted(offer, p.count.toLong(), p.total) else UpdateStep.Failed(Reason.NETWORK, e.message)
+                    return@launch
+                } catch (e: Exception) {
+                    partial = null
+                    _step.value = UpdateStep.Failed(Reason.NETWORK, e.message)
+                    return@launch
+                }
             }
+            val data = downloaded ?: return@launch
             if (!Md5.matches(data, offer.md5)) { _step.value = UpdateStep.Failed(Reason.MD5_MISMATCH); return@launch }
             image = data
             imageVersion = offer.version
@@ -159,6 +190,9 @@ class Updater(private val context: Context, private val scope: CoroutineScope) {
 
     companion object {
         const val MIN_BATTERY = 50
+        /** Automatic retries of a broken download before it waits for "Resume download". */
+        private const val AUTO_RETRIES = 3
+        private const val RETRY_DELAY_MS = 2_000L
 
         fun lowest(vararg b: Battery?): Int? = b.filterNotNull().minOfOrNull { it.percent }
     }

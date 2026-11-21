@@ -14,3 +14,6 @@ import kotlinx.serialization.Serializable
 // Opened from the profile picture: the You page, and Settings from there
 @Serializable data object YouRoute
 @Serializable data object SettingsRoute
+
+/** Settings > Protocol log. */
+@Serializable data object ProtocolLogRoute

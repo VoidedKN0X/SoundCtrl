@@ -5,6 +5,8 @@ import com.vknxworks.soundctrl.data.lock.LockVault
 import com.vknxworks.soundctrl.data.settings.AppSettings
 import com.vknxworks.soundctrl.data.settings.SettingsRepository
 import com.vknxworks.soundctrl.device.Devices
+import com.vknxworks.soundctrl.device.ProtocolLog
+import kotlinx.coroutines.launch
 import com.vknxworks.soundctrl.ui.lock.AppLock
 import com.vknxworks.soundctrl.update.Updater
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -31,6 +33,8 @@ class AppContainer(val context: Context) {
 
     init {
         AppLock.onLocked = { onLocked() }
+        // The protocol log only records while its switch is on; turning it off clears it.
+        appScope.launch { settings.settings.collect { ProtocolLog.enabled = it.protocolLog } }
     }
 
     suspend fun enableLock(pin: String) {
