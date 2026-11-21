@@ -24,7 +24,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Settings file:** export SoundCtrl's settings to a file and import them again (no devices, no addresses, nothing of the app lock).
 - **Honest about gaps:** anything whose exact commands couldn't be established for your model shows as **Needs confirming on your device** and is switched off. SoundCtrl never sends guessed commands.
 - **App lock** with its own PIN and optional fingerprint unlock, and **Hide in screenshots** / **Hide in recent apps** (all off until you turn them on).
-- **In English or Dutch:** SoundCtrl follows your phone's language. With the phone set to Dutch it is in Dutch (written for Flanders, informal "je"); otherwise English. Model names, units and technical terms stay as they are.
+- **In English, Dutch, French or German:** SoundCtrl follows your phone's language. With the phone set to Dutch it is in Dutch (written for Flanders, informal "je"), set to French it is in French (formal "vous", as Android itself), set to German it is in German (informal "du"); otherwise English. You can also pick one of these for SoundCtrl alone under Android's Settings > Apps > SoundCtrl > Language. Model names, units and technical terms stay as they are.
 - **Ctrl / Signal look**, shared by every Ctrl app: dark and light, high contrast, one violet accent, Space Grotesk and JetBrains Mono.
 
 Not part of SoundCtrl: PersoniFi, JBL or Harman accounts and cloud features, product pictures, Spotify and light-show features, and per-app EQ.

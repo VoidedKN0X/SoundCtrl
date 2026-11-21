@@ -4,6 +4,12 @@ What changed in each SoundCtrl release. Every release on the [Releases page](htt
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+### New
+
+- **SoundCtrl in French and German, following the phone's language.** With your phone set to French, SoundCtrl is now in French (formal "vous", as Android itself uses); set to German, it is in German (informal "du", as modern Android apps use). Every screen, message and the app lock are translated. Product and feature names (JBL, PartyBoost, Auracast, Ambient Aware, TalkThru, PersoniFi), units and technical terms (MD5, MTU, EQ) are not, and like the Dutch version the brand line, badges, licence name and source link stay in English. Android's per-app language setting (Settings > Apps > SoundCtrl > Language) now offers English, Dutch, French and German, so you can also pick one for SoundCtrl alone.
+
 ## v0.3.0 (2026-11-21)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published.

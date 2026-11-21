@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="you_offline">En ligne uniquement quand vous touchez Rechercher une mise à jour</string>
+
+    <!-- Shell texts for this app -->
+    <string name="settings_subtitle">Connexion et confidentialité</string>
+    <string name="app_lock_subtitle">Demander un code PIN (et éventuellement votre empreinte) à l\'ouverture de SoundCtrl. Une mise à jour du firmware en cours continue.</string>
+    <string name="app_lock_footer">SoundCtrl n\'a ni statistiques, ni pistage, ni compte. Il ne se connecte à Internet que lorsque vous touchez Rechercher une mise à jour, et uniquement au serveur de fichiers public de Harman avec l\'identifiant produit de votre appareil. Votre liste d\'appareils reste sur ce téléphone.</string>
+    <string name="lock_prompt_subtitle">Vos appareils JBL</string>
+    <string name="lock_forgot_body">Le code PIN ne peut pas être récupéré. SoundCtrl oubliera sa liste d\'appareils, réinitialisera ses paramètres et désactivera le verrouillage. Rien ne change sur vos casques ou enceintes.</string>
+
+    <!-- Devices -->
+    <string name="devices">Appareils</string>
+    <string name="your_devices">Vos appareils</string>
+    <string name="nearby">À proximité</string>
+    <string name="scan">Rechercher des appareils</string>
+    <string name="scanning">Recherche…</string>
+    <string name="nearby_footer">Allumez votre appareil JBL. Les casques déjà associés à ce téléphone apparaissent tout de suite ; les enceintes et écouteurs doivent être allumés et à proximité.</string>
+    <string name="no_devices">Aucun appareil pour l\'instant</string>
+    <string name="no_devices_body">Touchez Rechercher des appareils pour trouver les casques, écouteurs et enceintes JBL près de vous.</string>
+    <string name="paired_on_phone">Associé à ce téléphone</string>
+    <string name="unknown_model">Modèle non reconnu</string>
+    <string name="bt_permission_title">Autoriser les appareils à proximité</string>
+    <string name="bt_permission_body">SoundCtrl a besoin de l\'autorisation Appareils à proximité pour trouver vos appareils JBL et communiquer avec eux en Bluetooth. Elle n\'est jamais utilisée pour savoir où vous êtes.</string>
+    <string name="bt_permission_action">Autoriser</string>
+    <string name="bt_permission_settings">Ouvrir les paramètres de l\'application</string>
+    <string name="bt_off_title">Le Bluetooth est désactivé</string>
+    <string name="bt_off_body">Activez le Bluetooth pour trouver et contrôler vos appareils.</string>
+    <string name="bt_off_action">Activer le Bluetooth</string>
+
+    <!-- Device -->
+    <string name="connecting">Connexion…</string>
+    <string name="connect_failed">Connexion impossible</string>
+    <string name="connect_failed_body">Vérifiez que l\'appareil est allumé, à proximité et pas connecté à l\'application JBL sur un autre téléphone, puis réessayez.</string>
+    <string name="try_again">Réessayer</string>
+    <string name="connected">Connecté</string>
+    <string name="not_connected">Non connecté</string>
+    <string name="refresh">Actualiser</string>
+    <string name="disconnect">Déconnecter</string>
+    <string name="forget">Oublier cet appareil</string>
+    <string name="forget_title">Oublier cet appareil ?</string>
+    <string name="forget_body">SoundCtrl le retire de sa liste. L\'appareil lui-même et son association avec ce téléphone ne sont pas modifiés.</string>
+    <string name="model">Modèle</string>
+    <string name="product_id">Identifiant produit</string>
+    <string name="firmware">Firmware</string>
+    <string name="firmware_partner">Firmware (autre écouteur)</string>
+    <string name="firmware_case">Firmware (boîtier)</string>
+    <string name="battery">Batterie</string>
+    <string name="battery_left">Gauche</string>
+    <string name="battery_right">Droite</string>
+    <string name="battery_case">Boîtier</string>
+    <string name="percent">%1$d %%</string>
+    <string name="percent_charging">%1$d %% · en charge</string>
+    <string name="not_reported">Non indiqué</string>
+    <string name="needs_confirming">À confirmer sur votre appareil</string>
+    <string name="needs_confirming_footer">Les lignes marquées « À confirmer sur votre appareil » sont désactivées : les octets exacts pour ce modèle n\'ont pas pu être établis à partir des applications JBL, et SoundCtrl n\'envoie jamais de commandes devinées.</string>
+    <string name="setting_failed">L\'appareil n\'a pas accepté ce réglage</string>
+    <string name="busy_updating">Les réglages sont verrouillés pendant la mise à jour du firmware</string>
+
+    <string name="group_sound">Son</string>
+    <string name="noise_control">Contrôle du bruit</string>
+    <string name="noise_off">Désactivé</string>
+    <string name="noise_anc">Réduction de bruit</string>
+    <string name="noise_ambient">Ambient Aware</string>
+    <string name="noise_talkthru">TalkThru</string>
+    <string name="anc">Réduction de bruit</string>
+    <string name="ambient_talkthru">Ambient Aware et TalkThru</string>
+    <string name="eq_presets">Préréglages EQ</string>
+    <string name="eq_custom">EQ personnalisé</string>
+    <string name="eq_mode">Mode son</string>
+    <string name="eq_indoor">Intérieur</string>
+    <string name="eq_outdoor">Extérieur</string>
+
+    <string name="group_controls">Commandes</string>
+    <string name="gestures">Gestes tactiles et boutons</string>
+    <string name="gesture_left_swipe_fwd">Gauche · balayer vers l\'avant</string>
+    <string name="gesture_left_swipe_back">Gauche · balayer vers l\'arrière</string>
+    <string name="gesture_right_swipe_fwd">Droite · balayer vers l\'avant</string>
+    <string name="gesture_right_swipe_back">Droite · balayer vers l\'arrière</string>
+    <string name="gesture_left_tap">Gauche · appui</string>
+    <string name="gesture_left_double">Gauche · double appui</string>
+    <string name="gesture_left_triple">Gauche · triple appui</string>
+    <string name="gesture_right_tap">Droite · appui</string>
+    <string name="gesture_right_double">Droite · double appui</string>
+    <string name="gesture_right_triple">Droite · triple appui</string>
+    <string name="gesture_left_hold">Gauche · appui prolongé</string>
+    <string name="gesture_left_double_hold">Gauche · double appui prolongé</string>
+    <string name="gesture_right_hold">Droite · appui prolongé</string>
+    <string name="gesture_right_double_hold">Droite · double appui prolongé</string>
+    <string name="action_unknown">Autre (%1$d)</string>
+    <string name="action_0">Rien</string>
+    <string name="action_1">Volume +</string>
+    <string name="action_2">Volume -</string>
+    <string name="action_3">Ambient Aware</string>
+    <string name="action_4">TalkThru</string>
+    <string name="action_5">Piste suivante</string>
+    <string name="action_6">Piste précédente</string>
+    <string name="action_7">Réduction de bruit</string>
+    <string name="action_8">Lecture / pause</string>
+    <string name="action_9">Réduction de bruit / Ambient / désactivé</string>
+    <string name="action_11">Réduction de bruit / Ambient</string>
+    <string name="action_12">Réduction de bruit / désactivé</string>
+    <string name="action_13">Ambient / désactivé</string>
+    <string name="action_15">TalkThru / désactivé</string>
+
+    <string name="group_device">Appareil</string>
+    <string name="auto_off">Arrêt automatique</string>
+    <string name="auto_off_never">Désactivé</string>
+    <string name="minutes">%1$d min</string>
+    <string name="voice_prompts">Messages vocaux</string>
+    <string name="voice_prompts_sub">Annonces parlées ; désactivées, l\'appareil émet uniquement des tonalités</string>
+    <string name="feedback_tone">Tonalités de confirmation</string>
+    <string name="rename">Renommer</string>
+    <string name="rename_title">Renommer l\'appareil</string>
+    <string name="rename_sub">16 caractères maximum</string>
+    <string name="identify">Localiser cette enceinte</string>
+    <string name="identify_sub">Émet un son ou fait clignoter les lumières</string>
+
+    <string name="group_party">Fête et stéréo</string>
+    <string name="partyboost">PartyBoost</string>
+    <string name="partyboost_sub">Relier cette enceinte à d\'autres enceintes PartyBoost</string>
+    <string name="auracast">Auracast</string>
+    <string name="auracast_sub">Partager le son avec d\'autres enceintes Auracast</string>
+    <string name="auracast_groups">Groupes stéréo Auracast</string>
+    <string name="channel">Canal</string>
+    <string name="channel_both">Les deux (stéréo)</string>
+    <string name="channel_left">Gauche</string>
+    <string name="channel_right">Droite</string>
+
+    <string name="group_firmware">Firmware</string>
+    <string name="firmware_update">Mise à jour du firmware</string>
+    <string name="firmware_update_sub">Rechercher, télécharger et installer</string>
+    <string name="model_not_supported">SoundCtrl ne peut pas encore contrôler ce modèle</string>
+    <string name="model_not_supported_body">Il figure dans la liste des applications JBL, mais la façon de le contrôler n\'a pas pu être établie. La batterie et le firmware peuvent tout de même s\'afficher.</string>
+
+    <!-- Update -->
+    <string name="update_title">Mise à jour du firmware</string>
+    <string name="installed">Installé</string>
+    <string name="check_update">Rechercher une mise à jour</string>
+    <string name="check_explain">Une requête anonyme au serveur de fichiers public de Harman (%1$s) avec uniquement l\'identifiant produit %2$s. Rien d\'autre sur vous ou l\'appareil n\'est envoyé.</string>
+    <string name="no_update_source">Le serveur de Harman n\'a aucun fichier de mise à jour pour ce modèle.</string>
+    <string name="checking">Vérification…</string>
+    <string name="update_available">La version %1$s est disponible</string>
+    <string name="update_not_newer">La version %1$s est sur le serveur ; elle n\'est pas plus récente que la vôtre</string>
+    <string name="update_cant_compare">La version %1$s est sur le serveur</string>
+    <string name="download">Télécharger</string>
+    <string name="downloading">Téléchargement… %1$d %%</string>
+    <string name="ready">Version %1$s téléchargée et vérifiée (MD5 correspondant)</string>
+    <string name="ready_file">Votre fichier, version %1$s, vérifié (MD5 correspondant)</string>
+    <string name="use_file">Utiliser un fichier de firmware</string>
+    <string name="use_file_sub">Vous devez aussi indiquer son MD5 et sa version</string>
+    <string name="file_md5">MD5 du fichier (32 caractères)</string>
+    <string name="file_version">Version du firmware, par exemple 1.2.3</string>
+    <string name="file_check">Vérifier le fichier</string>
+    <string name="file_unreadable">Impossible de lire ce fichier</string>
+    <string name="install">Installer</string>
+    <string name="sending">Envoi à l\'appareil… %1$d %%</string>
+    <string name="sending_body">Gardez l\'appareil allumé et près du téléphone. Vous pouvez arrêter ; l\'appareil garde ce qu\'il a reçu et reprend à partir de là la prochaine fois.</string>
+    <string name="abort">Arrêter</string>
+    <string name="update_done">Envoyé. L\'appareil installe la mise à jour et redémarre tout seul ; cela peut prendre quelques minutes. Reconnectez-vous ensuite pour voir la nouvelle version.</string>
+    <string name="update_cancelled">Arrêté. L\'appareil garde son firmware actuel.</string>
+    <string name="failed_no_source">Aucun fichier de mise à jour n\'est publié pour ce modèle.</string>
+    <string name="failed_network">Impossible de joindre le serveur de fichiers de Harman.</string>
+    <string name="failed_answer">La réponse du serveur n\'a pas pu être lue.</string>
+    <string name="failed_md5">Le MD5 ne correspond pas : le fichier est endommagé ou ce n\'est pas celui décrit. Rien n\'a été envoyé à l\'appareil.</string>
+    <string name="failed_transfer">La mise à jour s\'est arrêtée : %1$s</string>
+    <string name="write_not_available">La mise à jour depuis cette application n\'est pas encore disponible pour ce modèle</string>
+    <string name="write_not_available_body">SoundCtrl peut lire la version du firmware et consulter le serveur de Harman, mais la façon dont cette famille de puces reçoit un nouveau firmware n\'est pas entièrement établie, donc SoundCtrl ne lui envoie rien. Utilisez l\'application JBL pour cette mise à jour.</string>
+    <string name="block_not_newer">Seul un firmware plus récent peut être installé.</string>
+    <string name="block_unknown_version">La version de l\'appareil ou du fichier n\'a pas pu être lue, donc SoundCtrl ne peut pas s\'assurer que la mise à jour est plus récente.</string>
+    <string name="block_battery">Chargez d\'abord l\'appareil à au moins %1$d %%.</string>
+    <string name="block_playing">Arrêtez d\'abord la musique ; l\'appareil doit être inactif.</string>
+    <string name="block_grouped">Quittez d\'abord PartyBoost, Auracast ou le mode stéréo.</string>
+    <string name="confirm_title">Installer le firmware %1$s ?</string>
+    <string name="confirm_body">L\'écriture du firmware dans SoundCtrl n\'a PAS ENCORE été testée sur un vrai appareil. Elle suit le protocole de mise à jour de l\'application JBL d\'aussi près qu\'il a pu être établi, et l\'appareil vérifie l\'image avant de basculer dessus, mais une mise à jour ratée pourrait obliger à passer par l\'application ou le service de JBL pour récupérer l\'appareil. Ne continuez que si vous acceptez ce risque.\n\nGardez l\'appareil allumé, chargé et près du téléphone jusqu\'à la fin.</string>
+    <string name="confirm_install">Installer quand même</string>
+    <string name="xfer_couldnt_start">impossible de démarrer</string>
+    <string name="xfer_no_answer">l\'enceinte n\'a pas répondu</string>
+    <string name="xfer_stopped_answering">l\'enceinte a cessé de répondre</string>
+    <string name="xfer_write_failed">échec de l\'écriture Bluetooth</string>
+    <string name="xfer_apply_failed">impossible de demander à l\'enceinte d\'appliquer la mise à jour</string>
+    <string name="xfer_refused">l\'enceinte a refusé le nouveau firmware (code %1$d)</string>
+    <string name="xfer_mtu_small">taille des paquets Bluetooth trop petite (MTU %1$d)</string>
+    <string name="xfer_stopped_asking">l\'appareil a cessé de demander des données</string>
+    <string name="xfer_device_error">l\'appareil a signalé une erreur (état %1$d)</string>
+    <string name="xfer_same_packet">l\'enceinte a demandé %1$d fois le même paquet</string>
+    <string name="xfer_speaker_error">l\'enceinte a signalé une erreur</string>
+    <string name="xfer_not_supported">non pris en charge</string>
+    <string name="update_untested">Pas encore testé sur un vrai appareil</string>
+
+    <!-- Notification -->
+    <string name="ch_update">Mise à jour du firmware</string>
+    <string name="ch_update_desc">S\'affiche pendant que SoundCtrl envoie un firmware à un appareil</string>
+    <string name="notif_updating">Mise à jour du firmware</string>
+    <string name="notif_updating_body">%1$d %% envoyés</string>
+
+    <!-- Settings -->
+    <string name="group_connecting">Connexion</string>
+    <string name="auto_connect">Se reconnecter au dernier appareil</string>
+    <string name="auto_connect_sub">À l\'ouverture de SoundCtrl</string>
+    <string name="forget_all">Oublier tous les appareils</string>
+    <string name="forget_all_body">SoundCtrl retire tous les appareils de sa liste. Rien ne change sur les appareils.</string>
+    <string name="connecting_footer">SoundCtrl communique avec un appareil à la fois en Bluetooth Low Energy. Les photos de produits, PersoniFi, les comptes JBL et le cloud de Harman ne font pas partie de SoundCtrl.</string>
+    <!-- Firmware download that resumes -->
+    <string name="download_interrupted">Le téléchargement s\'est arrêté à %1$d %%. Ce qui est arrivé est gardé en mémoire ; Reprendre le téléchargement ne récupère que le reste.</string>
+    <string name="resume_download">Reprendre le téléchargement</string>
+
+    <!-- Protocol log -->
+    <string name="group_troubleshooting">Dépannage</string>
+    <string name="protocol_log">Journal du protocole</string>
+    <string name="protocol_log_sub">Garder les messages Bluetooth que SoundCtrl envoie et reçoit, en mémoire uniquement</string>
+    <string name="protocol_log_open">Ouvrir le journal du protocole</string>
+    <string name="protocol_log_footer">Le journal n\'est conservé que tant que SoundCtrl est ouvert et n\'est jamais enregistré ni envoyé nulle part. Partager ou Copier sur l\'écran du journal le transmet à une application de votre choix, par exemple pour le joindre à un rapport de bug. Il peut contenir le nom et le numéro de série de votre appareil.</string>
+    <string name="protocol_log_empty">Le journal est vide</string>
+    <string name="protocol_log_empty_on">Connectez-vous à un appareil ; chaque message échangé avec lui s\'affiche ici.</string>
+    <string name="protocol_log_empty_off">Activez d\'abord Journal du protocole dans Paramètres, puis connectez-vous à un appareil.</string>
+    <string name="protocol_log_note">Plus récents en premier. → envoyé à l\'appareil, ← reçu. Les longs messages sont coupés après 48 octets ; les %1$d messages les plus récents sont conservés.</string>
+    <string name="protocol_log_share">Partager</string>
+    <string name="protocol_log_copy">Copier</string>
+    <string name="protocol_log_copied">Journal du protocole copié</string>
+    <string name="protocol_log_clear">Effacer le journal</string>
+    <string name="protocol_log_clear_body">Tous les messages du journal sont supprimés. L\'enregistrement continue tant que l\'interrupteur est activé.</string>
+    <string name="protocol_log_subject">Journal du protocole SoundCtrl</string>
+
+    <!-- Settings export and import -->
+    <string name="settings_file_group">Fichier de paramètres</string>
+    <string name="settings_file_footer">Le fichier ne contient que les paramètres de SoundCtrl : aucun appareil, aucune adresse Bluetooth et rien du verrouillage. L\'importation peut activer Masquer dans les captures d\'écran et Masquer dans les applis récentes et raccourcir le délai de verrouillage, mais ne les désactive jamais et n\'allonge jamais ce délai.</string>
+    <string name="settings_file_export">Exporter les paramètres</string>
+    <string name="settings_file_export_sub">Les enregistrer dans un fichier de votre choix</string>
+    <string name="settings_file_import">Importer les paramètres</string>
+    <string name="settings_file_import_sub">Les lire depuis un fichier de paramètres SoundCtrl</string>
+    <string name="settings_file_saved">Paramètres exportés</string>
+    <string name="settings_file_save_failed">Impossible d\'enregistrer le fichier</string>
+    <string name="settings_file_not_valid">Ce n\'est pas un fichier de paramètres SoundCtrl</string>
+    <string name="settings_file_too_new">Ce fichier provient d\'une version plus récente de SoundCtrl. Mettez d\'abord SoundCtrl à jour.</string>
+    <string name="settings_file_import_title">Importer les paramètres ?</string>
+    <string name="settings_file_import_body">Depuis un fichier créé le %1$s. Ces paramètres seront remplacés :\n\n%2$s</string>
+    <string name="settings_file_change">%1$s : %2$s → %3$s</string>
+    <string name="settings_file_no_changes">Ce fichier contient les mêmes paramètres que SoundCtrl actuellement (ou uniquement des paramètres qu\'une importation ne peut pas modifier). Rien à remplacer.</string>
+    <string name="settings_file_replace">Remplacer</string>
+    <string name="settings_file_close">Fermer</string>
+    <string name="settings_file_imported">Paramètres importés</string>
+    <string name="settings_file_on">Activé</string>
+    <string name="settings_file_off">Désactivé</string>
+
+    <!-- Shared Ctrl series strings: the You page, Settings shell and the app lock -->
+    <string name="group_about">À propos</string>
+    <string name="support_title">Soutenir SoundCtrl</string>
+    <string name="bugs_title">Signaler un bug</string>
+    <string name="bugs_subtitle">Un problème ou une idée ? Ouvrez un ticket sur GitHub</string>
+    <string name="source_title">Code source</string>
+    <string name="licence_title">Licence</string>
+    <string name="about_footer">SoundCtrl %1$s · VKNXWorks</string>
+
+    <string name="settings">Paramètres</string>
+    <string name="you_title">Vous</string>
+    <string name="label_profile">Profil</string>
+    <string name="label_app">Application</string>
+    <string name="you_this_phone">Ce téléphone</string>
+    <string name="cancel">Annuler</string>
+    <string name="back">Retour</string>
+    <string name="selected">Sélectionné</string>
+    <string name="save">Enregistrer</string>
+    <string name="clear">Effacer</string>
+
+    <!-- Privacy and security: the shared Ctrl series app lock -->
+    <string name="group_privacy">Confidentialité et sécurité</string>
+    <string name="app_lock">Verrouillage de l\'application</string>
+    <string name="hide_screenshots">Masquer dans les captures d\'écran</string>
+    <string name="hide_screenshots_subtitle">Les captures et enregistrements d\'écran affichent un écran vide</string>
+    <string name="hide_recents">Masquer dans les applis récentes</string>
+    <string name="hide_recents_subtitle">L\'aperçu des applis récentes affiche une carte vide au lieu de l\'application</string>
+    <string name="lock_title">Verrouillé</string>
+    <string name="lock_prompt_title">Déverrouiller SoundCtrl</string>
+    <string name="lock_use_pin">Utiliser le code PIN</string>
+    <string name="lock_use_fingerprint">Utiliser l\'empreinte</string>
+    <string name="lock_fingerprint_failed">Impossible de déverrouiller avec votre empreinte. Utilisez votre code PIN.</string>
+    <string name="lock_fingerprint_changed">Une empreinte a été ajoutée ou supprimée. Déverrouillez avec votre code PIN, puis réactivez le déverrouillage par empreinte.</string>
+    <string name="lock_enter_pin">Saisissez votre code PIN</string>
+    <string name="lock_pin_required">Saisissez votre code PIN. Il est demandé après un redémarrage et toutes les 72 heures.</string>
+    <string name="lock_wrong_pin">Code PIN incorrect</string>
+    <string name="lock_too_many">Trop de tentatives. Réessayez dans %1$d s</string>
+    <string name="lock_forgot">Code PIN oublié ?</string>
+    <string name="lock_forgot_title">Code PIN oublié ?</string>
+    <string name="lock_forgot_confirm">Réinitialiser le verrouillage</string>
+    <string name="lock_choose_pin">Choisissez un code PIN pour l\'application</string>
+    <string name="lock_enable_intro">Au moins %1$d chiffres, différent du code PIN de votre téléphone. Si vous l\'oubliez, vous pouvez réinitialiser le verrouillage et les paramètres propres à SoundCtrl.</string>
+    <string name="lock_change_pin">Modifier le code PIN de l\'application</string>
+    <string name="lock_change_intro">Au moins %1$d chiffres, différent du code PIN de votre téléphone.</string>
+    <string name="lock_change_pin_subtitle">Au moins %1$d chiffres, distinct du code PIN du téléphone</string>
+    <string name="lock_turn_off">Désactiver le verrouillage</string>
+    <string name="lock_turn_off_intro">Saisissez le code PIN de l\'application pour désactiver le verrouillage.</string>
+    <string name="lock_enter_current_pin">Saisissez votre code PIN actuel</string>
+    <string name="lock_repeat_pin">Saisissez à nouveau le même code PIN</string>
+    <string name="lock_pin_too_easy">Trop facile à deviner. Choisissez un code PIN moins évident.</string>
+    <string name="lock_pin_mismatch">Les codes PIN ne correspondent pas. Recommencez.</string>
+    <string name="lock_save_failed">Impossible d\'enregistrer le code PIN. Réessayez.</string>
+    <string name="lock_ok">OK</string>
+    <string name="lock_next">Suivant</string>
+    <string name="lock_done">Terminé</string>
+    <string name="lock_delete_digit">Supprimer</string>
+    <string name="lock_fingerprint">Déverrouiller avec l\'empreinte</string>
+    <string name="lock_fingerprint_subtitle">Uniquement la biométrie forte, comme votre empreinte digitale, vérifiée par le matériel sécurisé du téléphone. Le code PIN reste nécessaire après un redémarrage et toutes les 72 heures.</string>
+    <string name="lock_fingerprint_unavailable">Configurez d\'abord une empreinte digitale sur ce téléphone</string>
+    <string name="lock_fingerprint_setup_failed">Impossible de configurer le déverrouillage par empreinte</string>
+    <string name="lock_fingerprint_enable_title">Activer le déverrouillage par empreinte</string>
+    <string name="lock_fingerprint_enable_subtitle">Confirmez votre empreinte digitale</string>
+    <string name="lock_again">Reverrouiller</string>
+    <string name="lock_again_immediately">Dès que vous quittez l\'application</string>
+    <string name="lock_again_1m">Après 1 minute d\'absence</string>
+    <string name="lock_again_5m">Après 5 minutes d\'absence</string>
+    <string name="lock_again_15m">Après 15 minutes d\'absence</string>
+    <string name="lock_again_1h">Après 1 heure d\'absence</string>
+    <string name="lock_again_restart">Uniquement au redémarrage de l\'application</string>
+</resources>
