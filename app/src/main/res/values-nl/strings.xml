@@ -227,6 +227,7 @@
     <string name="source_title">Broncode</string>
     <string name="licence_title">Licentie</string>
     <string name="about_footer">SoundCtrl %1$s · VKNXWorks</string>
+    <string name="label_footer_badges">Google-vrij · Zonder telemetrie · arm64</string>
     <string name="settings">Instellingen</string>
     <string name="you_title">Jij</string>
     <string name="label_profile">Profiel</string>
