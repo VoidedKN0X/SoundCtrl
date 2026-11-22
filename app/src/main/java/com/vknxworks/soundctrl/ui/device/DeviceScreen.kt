@@ -20,7 +20,6 @@ import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Hearing
 import androidx.compose.material.icons.outlined.HighQuality
 import androidx.compose.material.icons.outlined.Mic
-import androidx.compose.material.icons.outlined.ThreeDRotation
 import androidx.compose.material.icons.outlined.Headphones
 import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material.icons.outlined.Edit
@@ -350,7 +349,7 @@ private fun TourPro3Sound(s: DeviceSession, st: DeviceState, act: (suspend () ->
             RaceTourPro3.SPATIAL_FIXED to stringResource(R.string.spatial_fixed),
             RaceTourPro3.SPATIAL_HEAD_TRACKING to stringResource(R.string.spatial_head_tracking),
         ),
-        st.spatial, icon = Icons.Outlined.ThreeDRotation, fallbackLabel = stringResource(R.string.not_reported),
+        st.spatial, icon = Icons.Outlined.Headphones, fallbackLabel = stringResource(R.string.not_reported),
     ) { m -> act { s.setSpatial(m) } }
     GroupSwitch(stringResource(R.string.hi_res), stringResource(R.string.hi_res_sub), st.hiRes == true, Icons.Outlined.HighQuality) { on ->
         act { s.setHiRes(on) }
