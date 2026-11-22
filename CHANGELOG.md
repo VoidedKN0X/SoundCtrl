@@ -4,6 +4,17 @@ What changed in each SoundCtrl release. Every release on the [Releases page](htt
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+### Fixed
+
+- **Airoha earbuds (Tour Pro 3): settings weren't accepted.** On a real Tour Pro 3, SoundCtrl 0.5.0 showed battery and firmware correctly, but the current noise-control mode stayed empty and every change (noise control, auto power-off, auto play/pause, find my buds) ended in "The device didn't accept that". The exact cause isn't known yet. This version makes three changes that follow the official JBL app more closely:
+  - Right after connecting it now turns on the earbuds' status updates, the first thing the JBL app does once it is connected and the one step SoundCtrl 0.5.0 left out.
+  - It waits up to 4 seconds (was 3) for the earbuds to answer a change, and 3 seconds (was 2.5) when reading.
+  - For noise control, a status update from the earbuds showing the mode you picked now also counts as done.
+- **The error message now says why.** When an Airoha setting fails, the message under "The device didn't accept that" tells which case it was: it couldn't be sent, there was no answer (and which other messages came in meanwhile), the earbuds refused it (with their status code), or the earbuds answered in a way SoundCtrl didn't expect (with the first bytes of that answer). The command is named by its number, for example "RACE 0x0E06" for noise control. Please send a screenshot of that message if it still happens. Translated into Dutch, French and German.
+- Still not tested on a real device by the developer; this release is meant to find out what the Tour Pro 3 answers.
+
 ## v0.5.0 (2026-11-22)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published.

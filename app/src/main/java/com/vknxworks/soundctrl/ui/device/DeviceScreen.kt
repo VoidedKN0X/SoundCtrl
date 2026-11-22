@@ -46,6 +46,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vknxworks.soundctrl.R
 import com.vknxworks.soundctrl.container
 import com.vknxworks.soundctrl.device.DeviceSession
+import com.vknxworks.soundctrl.device.RaceFailure
 import com.vknxworks.soundctrl.device.DeviceState
 import com.vknxworks.soundctrl.device.Devices
 import com.vknxworks.soundctrl.proto.Battery
@@ -121,7 +122,14 @@ private fun DeviceBody(s: DeviceSession, st: DeviceState, onUpdate: () -> Unit, 
     val locked = stringResource(R.string.busy_updating)
     fun act(block: suspend () -> Boolean) {
         if (s.updating) { Toast.makeText(context, locked, Toast.LENGTH_SHORT).show(); return }
-        scope.launch { if (!block()) Toast.makeText(context, failed, Toast.LENGTH_SHORT).show() }
+        s.clearRaceFailure()
+        scope.launch {
+            if (!block()) {
+                // Airoha devices: say what went wrong, so a report tells which case it was.
+                val why = s.lastRaceFailure?.let { raceFailureText(context, it) }
+                Toast.makeText(context, if (why != null) "$failed\n$why" else failed, Toast.LENGTH_LONG).show()
+            }
+        }
     }
     val needs = stringResource(R.string.needs_confirming)
 
@@ -367,3 +375,16 @@ private fun actionLabel(a: Int): String = when (a) {
     15 -> stringResource(R.string.action_15)
     else -> stringResource(R.string.action_unknown, a)
 }
+
+/** The reason line under "didn't accept" for an Airoha setting. */
+private fun raceFailureText(context: android.content.Context, f: RaceFailure): String {
+    val id = "0x%04X".format(f.id)
+    return when (f.kind) {
+        RaceFailure.Kind.NOT_SENT -> context.getString(R.string.race_not_sent, id)
+        RaceFailure.Kind.NO_ANSWER -> context.getString(R.string.race_no_answer, id) +
+            if (f.seen.isEmpty()) "" else context.getString(R.string.race_seen, f.seen.joinToString(", "))
+        RaceFailure.Kind.REFUSED -> context.getString(R.string.race_refused, "0x%02X".format(f.status and 0xFF), id)
+        RaceFailure.Kind.UNEXPECTED -> context.getString(R.string.race_unexpected, id, f.hex)
+    }
+}
+

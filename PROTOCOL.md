@@ -196,6 +196,7 @@ Source: `com.harman.cmdctrl.imp.control.u3.lea.TourPro3LeControl` → `LeaAhBase
 
 | Function | Command | Reply | |
 | --- | --- | --- | --- |
+| Status pushes on (sent once after connecting) | `5A 0006 [01]` | `5B 0006 [status]` | [V] `AirohaDeviceConnector` (`setDevicePushStatusOnOff(true)`), `MmiStage_SetDevicePushStatusOnOff` |
 | Agent is right earbud? | `5A 0CD4` | `5B 0CD4 [status][1 = right]` | [V] `MmiStageCheckAgentChannel` |
 | Partner connected? | `5A 0D00` | `5B 0D00 (type id)*` from [6], no status; partner present when a pair has type 5 | [V] `MmiStageGetAvaDst` |
 | Earbud battery | `5A 0CD6 [role]` | `5D 0CD6 [status][role][percent]` | [V] `MmiStageTwsGetBattery` |
@@ -219,7 +220,14 @@ Values [V]:
 - **Auto power-off**: the app sends minutes × 60 and offers 30, 60, 120 minutes or off for earbuds (`fq.a`, 15 minutes and up to 4 hours only for some headphones); off keeps the last time with "on" 0 (`fq.g.O0`).
 - **Find my buds**: the Tour Pro 3 control only rings or silences (`TourPro3LeControl.setFindMyBuds`); behaviour = ring (lighting unset) gives blink 0, ring 1; silence gives 0, 0. Left (Harman channel 2) → target 0, right (channel 1) → target 1 (`AB155xDeviceControl.doSetFindMyBuds`). Without the partner the app rings only the agent's side.
 
-### 7.3 Not implemented for Airoha (needs confirming)
+### 7.3 Field report (SoundCtrl 0.5.0 on a real Tour Pro 3)
+
+- Worked: RFCOMM connection, chip and model name, agent side, battery (both earbuds, charging, case), firmware.
+- Failed: the noise-control status read (`0901`) got no matching reply, and every setting (`0E06`, `2C82`, `2C01`) was reported as not accepted. Which of "no answer", "refused (status)" or "other answer" isn't known yet.
+- What was checked: the sizes of the JBL app's own writes in the owner's stack log (10 bytes for Ambient Aware and ANC, 8 for off) match SoundCtrl's frames, its header byte is `05` (`RacePacket.getRawMmiMode`), and the earbuds answered the JBL app within about 80 ms with `5B 0E06 [00][0A|0B]…`, followed about 0.5 s later by a `5D 0901` status push. The one difference found in the connection sequence: right after connecting the JBL app turns the device's status pushes on (`0006 [01]`), which SoundCtrl 0.5.0 didn't send [V that the app sends it; I whether the earbuds need it].
+- Since 0.5.1 SoundCtrl sends that command too, waits up to 4 s for a setting's answer, also counts the `5B`/`5D` `0901` status showing the requested mode as done for noise control [I], and the "didn't accept" message names the reason (no answer / refused with status / unexpected answer with its first bytes / frames seen meanwhile) so the next test can tell which case it is.
+
+### 7.4 Not implemented for Airoha (needs confirming)
 
 - **Gestures**: per-chip stages (`MmiStage_Get/SetGesture_1568_v3`, `…_1568`, `MmiStage_GetHeadsetGesture`) that read and write key-map NV keys and reload them on both earbuds; the per-model action tables weren't pinned.
 - **Voice prompts**: on these models the setting is a voice-prompt language (`SetVpLanguageIndex`, 255 = tones) plus an off switch (`SetVpOnoff 0`); how "on" is restored after "off" isn't clear from the code.

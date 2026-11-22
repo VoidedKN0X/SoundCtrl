@@ -19,6 +19,7 @@ object Race {
     const val PARTNER = 1
 
     // RACE ids (com.airoha.libbase.RaceCommand.constant.RaceId)
+    const val SET_DEVICE_PUSH_STATUS = 0x0006
     const val GET_CHARGING_INFO = 0x0009
     const val GET_BOX_BATTERY = 0x000B
     const val HOSTAUDIO_MMI_GET = 0x0901
@@ -58,6 +59,23 @@ object Race {
         if (b.u16le(2) + 4 != b.size) return null
         return RaceFrame(b.u8(1), b.u16le(4), b.copyOfRange(6, b.size))
     }
+
+    /**
+     * The status byte of a reply: [8] for the host-audio ids 0900/0901 (after the module), [6] for the rest
+     * (`MmiStage.handleResp`). null when the frame is too short.
+     */
+    fun statusOf(b: ByteArray): Int? {
+        val f = parse(b) ?: return null
+        val i = if (f.id == 0x0900 || f.id == HOSTAUDIO_MMI_GET) 2 else 0
+        return if (f.payload.size > i) f.payload.u8(i) else null
+    }
+
+    /**
+     * Turns on the device's status pushes, as the JBL app does right after connecting to Airoha earbuds
+     * (`AirohaDeviceConnector`: `setDevicePushStatusOnOff(true)`, `MmiStage_SetDevicePushStatusOnOff`): `5A 0006 [01]`,
+     * reply `5B 0006 [status]`.
+     */
+    fun setDevicePushStatus(on: Boolean) = cmd(SET_DEVICE_PUSH_STATUS, if (on) 1 else 0)
 
     // ---------- firmware ----------
 

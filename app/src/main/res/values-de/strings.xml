@@ -114,6 +114,11 @@
     <string name="find_left">Linken Ohrhörer klingeln lassen</string>
     <string name="find_right">Rechten Ohrhörer klingeln lassen</string>
     <string name="find_sub">Spielt einen lauten Ton ab, damit du ihn wiederfindest. Nimm die Ohrhörer vorher aus den Ohren.</string>
+    <string name="race_not_sent">Konnte nicht an die Ohrhörer gesendet werden (RACE %1$s)</string>
+    <string name="race_no_answer">Keine Antwort von den Ohrhörern (RACE %1$s)</string>
+    <string name="race_seen">; empfangen: %1$s</string>
+    <string name="race_refused">Von den Ohrhörern abgelehnt (Status %1$s, RACE %2$s)</string>
+    <string name="race_unexpected">Unerwartete Antwort der Ohrhörer (RACE %1$s: %2$s)</string>
     <string name="feedback_tone">Bestätigungstöne</string>
     <string name="rename">Umbenennen</string>
     <string name="rename_title">Gerät umbenennen</string>

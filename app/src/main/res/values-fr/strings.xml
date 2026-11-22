@@ -114,6 +114,11 @@
     <string name="find_left">Faire sonner l\'écouteur gauche</string>
     <string name="find_right">Faire sonner l\'écouteur droit</string>
     <string name="find_sub">Émet un son fort pour vous aider à le retrouver. Retirez d\'abord les écouteurs de vos oreilles.</string>
+    <string name="race_not_sent">Impossible de l\'envoyer aux écouteurs (RACE %1$s)</string>
+    <string name="race_no_answer">Aucune réponse des écouteurs (RACE %1$s)</string>
+    <string name="race_seen"> ; reçu : %1$s</string>
+    <string name="race_refused">Refusé par les écouteurs (statut %1$s, RACE %2$s)</string>
+    <string name="race_unexpected">Réponse inattendue des écouteurs (RACE %1$s : %2$s)</string>
     <string name="feedback_tone">Tonalités de confirmation</string>
     <string name="rename">Renommer</string>
     <string name="rename_title">Renommer l\'appareil</string>

@@ -112,6 +112,11 @@
     <string name="find_left">Ring the left earbud</string>
     <string name="find_right">Ring the right earbud</string>
     <string name="find_sub">Plays a loud sound to help you find it. Take the earbuds out of your ears first.</string>
+    <string name="race_not_sent">Couldn\'t send it to the earbuds (RACE %1$s)</string>
+    <string name="race_no_answer">No answer from the earbuds (RACE %1$s)</string>
+    <string name="race_seen">; received: %1$s</string>
+    <string name="race_refused">Refused by the earbuds (status %1$s, RACE %2$s)</string>
+    <string name="race_unexpected">Unexpected answer from the earbuds (RACE %1$s: %2$s)</string>
     <string name="feedback_tone">Feedback tones</string>
     <string name="rename">Rename</string>
     <string name="rename_title">Rename device</string>

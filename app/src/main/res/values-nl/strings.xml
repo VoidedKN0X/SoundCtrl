@@ -105,6 +105,11 @@
     <string name="find_left">Linkeroortje laten piepen</string>
     <string name="find_right">Rechteroortje laten piepen</string>
     <string name="find_sub">Speelt een luid geluid af zodat je het terugvindt. Haal de oortjes eerst uit je oren.</string>
+    <string name="race_not_sent">Kon het niet naar de oortjes sturen (RACE %1$s)</string>
+    <string name="race_no_answer">Geen antwoord van de oortjes (RACE %1$s)</string>
+    <string name="race_seen">; ontvangen: %1$s</string>
+    <string name="race_refused">Geweigerd door de oortjes (status %1$s, RACE %2$s)</string>
+    <string name="race_unexpected">Onverwacht antwoord van de oortjes (RACE %1$s: %2$s)</string>
     <string name="feedback_tone">Feedbacktonen</string>
     <string name="rename">Naam wijzigen</string>
     <string name="rename_title">Toestel een andere naam geven</string>

@@ -24,6 +24,7 @@ import com.vknxworks.soundctrl.proto.SpeakerDfuCommands
 import com.vknxworks.soundctrl.proto.SpeakerInfo
 import com.vknxworks.soundctrl.proto.SpeakerInfoParser
 import com.vknxworks.soundctrl.proto.SpeakerP4
+import com.vknxworks.soundctrl.proto.hex
 import com.vknxworks.soundctrl.proto.u8
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -97,6 +98,15 @@ data class DeviceState(
     val airohaSettings: Boolean get() = airohaBasics && airoha?.hasMmiSettings == true
 }
 
+/**
+ * Why the last Airoha setting failed, for the message shown to the user: nothing was sent, no answer came,
+ * the device refused it (with its status byte), or an answer with the right id but a layout SoundCtrl didn't
+ * expect came (its first bytes in [hex]). [seen] lists other frames that came in while waiting ("5D 0901").
+ */
+data class RaceFailure(val kind: Kind, val id: Int, val status: Int = 0, val hex: String = "", val seen: List<String> = emptyList()) {
+    enum class Kind { NOT_SENT, NO_ANSWER, REFUSED, UNEXPECTED }
+}
+
 /** One connected JBL device. All protocol traffic for it goes through here. */
 class DeviceSession(context: Context, val address: String, knownPid: String?, val le: Boolean) {
     private val appContext = context.applicationContext
@@ -115,6 +125,12 @@ class DeviceSession(context: Context, val address: String, knownPid: String?, va
     /** Whole RACE frames from an Airoha device. */
     val raceFrames: SharedFlow<ByteArray> = _race
     private var reader: Job? = null
+
+    /** Why the last Airoha setting failed (null after a success). Read by the device screen for its message. */
+    @Volatile var lastRaceFailure: RaceFailure? = null
+        private set
+
+    fun clearRaceFailure() { lastRaceFailure = null }
 
     /** Blocks setting changes while an update runs. */
     @Volatile var updating = false
@@ -325,8 +341,58 @@ class DeviceSession(context: Context, val address: String, knownPid: String?, va
         }
     }
 
-    private suspend fun <R> race(frame: ByteArray, timeoutMs: Long = 2500, pick: (ByteArray) -> R?): R? =
+    private suspend fun <R> race(frame: ByteArray, timeoutMs: Long = 3000, pick: (ByteArray) -> R?): R? =
         request(raceFrames, listOf(frame), timeoutMs, pick)
+
+    /**
+     * Sends one Airoha setting and waits for the answer. [accept] returns true (done), false (the device refused:
+     * right id, status not 0) or null (not the answer). Records why it failed in [lastRaceFailure].
+     */
+    private suspend fun raceSet(frame: ByteArray, id: Int, timeoutMs: Long = 4000, accept: (ByteArray) -> Boolean?): Boolean = coroutineScope {
+        lastRaceFailure = null
+        var sameId: ByteArray? = null
+        val seen = mutableListOf<String>()
+        val wait = async(start = CoroutineStart.UNDISPATCHED) {
+            raceFrames.mapNotNull { b ->
+                val f = Race.parse(b)
+                if (f == null || (f.type != Race.RESPONSE && f.type != Race.INDICATION)) {
+                    null
+                } else {
+                    val a = accept(b)
+                    if (a == null) {
+                        if (f.id == id && sameId == null) sameId = b
+                        if (seen.size < 4) seen += "%02X %04X".format(f.type, f.id)
+                        null
+                    } else {
+                        a to b
+                    }
+                }
+            }.first()
+        }
+        if (!link.write(frame)) {
+            wait.cancel()
+            lastRaceFailure = RaceFailure(RaceFailure.Kind.NOT_SENT, id)
+            return@coroutineScope false
+        }
+        val r = withTimeoutOrNull(timeoutMs) { wait.await() }
+        wait.cancel()
+        when {
+            r == null -> {
+                val same = sameId
+                lastRaceFailure = if (same != null) {
+                    RaceFailure(RaceFailure.Kind.UNEXPECTED, id, hex = same.copyOfRange(0, minOf(same.size, 16)).hex())
+                } else {
+                    RaceFailure(RaceFailure.Kind.NO_ANSWER, id, seen = seen.toList())
+                }
+                false
+            }
+            r.first -> true
+            else -> {
+                lastRaceFailure = RaceFailure(RaceFailure.Kind.REFUSED, id, status = Race.statusOf(r.second) ?: -1)
+                false
+            }
+        }
+    }
 
     /**
      * Reads the chip name and, when the model isn't known yet, the model name (the product id on JBL models),
@@ -336,6 +402,8 @@ class DeviceSession(context: Context, val address: String, knownPid: String?, va
         val chip = race(Race.getChipName()) { Race.parseChipName(it) } ?: return
         val family = AirohaFamily.fromChipName(chip)
         _state.update { it.copy(airoha = family) }
+        // As the JBL app does once the link is up: turn on the device's status pushes. Its answer isn't needed.
+        if (family != AirohaFamily.AB1562) race(Race.setDevicePushStatus(true)) { b -> Race.parse(b)?.takeIf { it.type == Race.RESPONSE && it.id == Race.SET_DEVICE_PUSH_STATUS } }
         if (_state.value.product == null && family != AirohaFamily.AB1562) {
             val model = race(Race.getModelName(family)) { Race.parseModelName(it) }?.lowercase()
             val prod = Catalog.find(model)
@@ -401,7 +469,10 @@ class DeviceSession(context: Context, val address: String, knownPid: String?, va
                 p4Set(HeadphoneP4.setNoise(mode, s.product?.has("asc") == true, level))
             }
             Control.HP_AA -> aaAck(Aa.hpSetAnc(mode == NoiseMode.ANC), Aa.HP_SET_ANC)
-            Control.HP_AIROHA -> s.airohaSettings && race(Race.setNoise(mode), 3000) { Race.parseSetNoise(it, mode) } == true
+            // The reply to 0E06, or the device's status push (5B/5D 0901) showing the new mode, counts as done.
+            Control.HP_AIROHA -> s.airohaSettings && raceSet(Race.setNoise(mode), Race.ANC_ON_OFF) { b ->
+                Race.parseSetNoise(b, mode) ?: Race.parseNoise(b)?.takeIf { it == mode }?.let { true }
+            }
             else -> false
         }
         if (ok) _state.update { it.copy(noise = mode) }
@@ -412,7 +483,7 @@ class DeviceSession(context: Context, val address: String, knownPid: String?, va
         val ok = when (_state.value.control) {
             Control.HP_P4 -> p4Set(HeadphoneP4.setAutoOff(on, minutes))
             Control.HP_AIROHA -> _state.value.airohaSettings &&
-                race(Race.setAutoOff(on, minutes)) { Race.parseSetCommonConfig(it, Race.MODULE_AUTO_POWER_OFF) } == true
+                raceSet(Race.setAutoOff(on, minutes), Race.SET_MMI_COMMON_CONFIG) { Race.parseSetCommonConfig(it, Race.MODULE_AUTO_POWER_OFF) }
             else -> false
         }
         if (ok) _state.update { s -> s.copy(autoOff = on to minutes) }
@@ -422,14 +493,14 @@ class DeviceSession(context: Context, val address: String, knownPid: String?, va
     /** Airoha: pause when an earbud comes out, play when it goes back in. */
     suspend fun setInEarPlayPause(on: Boolean): Boolean {
         val ok = _state.value.airohaSettings &&
-            race(Race.setInEarPlayPause(on)) { Race.parseSetCommonConfig(it, Race.MODULE_IN_EAR_PLAY_PAUSE) } == true
+            raceSet(Race.setInEarPlayPause(on), Race.SET_MMI_COMMON_CONFIG) { Race.parseSetCommonConfig(it, Race.MODULE_IN_EAR_PLAY_PAUSE) }
         if (ok) _state.update { it.copy(inEarPlayPause = on) }
         return ok
     }
 
     /** Airoha: ring the left ([Race.FIND_LEFT]) or right earbud, or stop it. */
     suspend fun findBud(target: Int, ring: Boolean): Boolean {
-        val ok = _state.value.airohaBasics && race(Race.findMe(target, ring)) { Race.parseFindMe(it) } == true
+        val ok = _state.value.airohaBasics && raceSet(Race.findMe(target, ring), Race.FIND_ME) { Race.parseFindMe(it) }
         if (ok) _state.update { if (target == Race.FIND_LEFT) it.copy(ringingLeft = ring) else it.copy(ringingRight = ring) }
         return ok
     }

@@ -75,6 +75,13 @@ class RaceTest {
         assertEquals(true, Race.parseFindMe(h("055b0300012c00")))
     }
 
+    @Test fun pushStatusAndStatusByte() {
+        assertEquals("055a0300060001", Race.setDevicePushStatus(true).hex())
+        assertEquals(0x03, Race.statusOf(h("055b0300060e03")))
+        assertEquals(0x02, Race.statusOf(h("055b0600" + "0109" + "0500" + "02" + "01")))
+        assertNull(Race.statusOf(h("0102")))
+    }
+
     @Test fun chipAndModel() {
         val chip = h("055b0c00000a" + "0800") + "AB1585AM".toByteArray()
         assertEquals("AB1585AM", Race.parseChipName(chip))
