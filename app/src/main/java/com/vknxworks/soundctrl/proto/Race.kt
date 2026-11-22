@@ -188,18 +188,33 @@ object Race {
     /** Airoha filter numbers on AB1568/AB158x (`SDKAncSettings.AB1568_ANC_INDEX`). */
     const val FILTER_OFF = 0
     const val FILTER_ANC = 1
-    const val FILTER_AMBIENT = 9
-    const val FILTER_TALKTHRU = 10
+    /** The two pass-through filters (`AB1568_ANC_INDEX` 9 and 10). Which one is Ambient Aware depends on the model. */
+    const val FILTER_PASS_1 = 9
+    const val FILTER_PASS_2 = 10
+
+    /**
+     * Products whose pass-through filters are the other way round from the JBL app's code reading: on the
+     * Tour Pro 3 (`20f2`, case `20fd`) filter 10 is Ambient Aware and 9 is TalkThru. Confirmed on the owner's
+     * earbuds (SoundCtrl 0.5.1: Ambient Aware gave TalkThru and the other way round). PROTOCOL.md §7.2.
+     */
+    val SWAPPED_PASS_THROUGH_PIDS = setOf("20f2", "20fd")
+
+    /** The (Ambient Aware, TalkThru) filters for product [pid]. Other models keep the reading of `convertToAirohaAncIndex` (9, 10). */
+    fun passThroughFilters(pid: String?): Pair<Int, Int> =
+        if (pid != null && pid.lowercase() in SWAPPED_PASS_THROUGH_PIDS) FILTER_PASS_2 to FILTER_PASS_1 else FILTER_PASS_1 to FILTER_PASS_2
 
     /**
      * Sets noise control (`MmiStageAncOn` / `MmiStageAncOff`, id 0E06). On: `00 0A filter mode`, mode 0 for ANC,
-     * 4 for the pass-through filters (Ambient Aware 9, TalkThru 10). Off: `00 0B`.
+     * 4 for the pass-through filters (see [passThroughFilters] for which filter is which on [pid]). Off: `00 0B`.
      */
-    fun setNoise(mode: NoiseMode): ByteArray = when (mode) {
-        NoiseMode.OFF -> cmd(ANC_ON_OFF, 0x00, 0x0B)
-        NoiseMode.ANC -> cmd(ANC_ON_OFF, 0x00, 0x0A, FILTER_ANC, 0)
-        NoiseMode.AMBIENT -> cmd(ANC_ON_OFF, 0x00, 0x0A, FILTER_AMBIENT, 4)
-        NoiseMode.TALKTHRU -> cmd(ANC_ON_OFF, 0x00, 0x0A, FILTER_TALKTHRU, 4)
+    fun setNoise(mode: NoiseMode, pid: String? = null): ByteArray {
+        val (ambient, talkThru) = passThroughFilters(pid)
+        return when (mode) {
+            NoiseMode.OFF -> cmd(ANC_ON_OFF, 0x00, 0x0B)
+            NoiseMode.ANC -> cmd(ANC_ON_OFF, 0x00, 0x0A, FILTER_ANC, 0)
+            NoiseMode.AMBIENT -> cmd(ANC_ON_OFF, 0x00, 0x0A, ambient, 4)
+            NoiseMode.TALKTHRU -> cmd(ANC_ON_OFF, 0x00, 0x0A, talkThru, 4)
+        }
     }
 
     /** 5B 0E06: status [6], then 0A (turned on) or 0B (turned off) [7]. True when the device did what [mode] asked. */
@@ -216,17 +231,19 @@ object Race {
 
     /**
      * 5B (or a 5D push) 0901: module LE16 [6], status [8], filter [9], gain LE16 [10] (optional).
-     * Filter 0 off, 1-4 noise cancelling, 9 Ambient Aware, 10 TalkThru; other filters aren't mapped (null).
+     * Filter 0 off, 1-4 noise cancelling, 9 and 10 Ambient Aware and TalkThru as [passThroughFilters] gives them
+     * for [pid]; other filters aren't mapped (null).
      */
-    fun parseNoise(b: ByteArray): NoiseMode? {
+    fun parseNoise(b: ByteArray, pid: String? = null): NoiseMode? {
         val f = parse(b) ?: return null
         if ((f.type != RESPONSE && f.type != INDICATION) || f.id != HOSTAUDIO_MMI_GET || f.payload.size < 4) return null
         if (f.payload.u16le(0) != MODULE_ANC_STATUS || f.payload.u8(2) != 0) return null
+        val (ambient, talkThru) = passThroughFilters(pid)
         return when (f.payload.u8(3)) {
             FILTER_OFF -> NoiseMode.OFF
             1, 2, 3, 4 -> NoiseMode.ANC
-            FILTER_AMBIENT -> NoiseMode.AMBIENT
-            FILTER_TALKTHRU -> NoiseMode.TALKTHRU
+            ambient -> NoiseMode.AMBIENT
+            talkThru -> NoiseMode.TALKTHRU
             else -> null
         }
     }

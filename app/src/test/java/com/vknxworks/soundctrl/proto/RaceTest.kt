@@ -63,6 +63,32 @@ class RaceTest {
         assertNull(Race.parseSetNoise(h("055b0400060e000b"), NoiseMode.ANC)) // the reply to a different request
     }
 
+    @Test fun passThroughFiltersPerModel() {
+        // Other Airoha models (unconfirmed): the JBL app's code reading, Ambient Aware 9, TalkThru 10.
+        assertEquals(9 to 10, Race.passThroughFilters(null))
+        assertEquals(9 to 10, Race.passThroughFilters("2089"))
+        assertEquals("055a0600060e000a0904", Race.setNoise(NoiseMode.AMBIENT, "2089").hex())
+        assertEquals("055a0600060e000a0a04", Race.setNoise(NoiseMode.TALKTHRU, "2089").hex())
+        // Tour Pro 3 (earbuds 20f2, case 20fd): confirmed on a real device the other way round.
+        assertEquals(10 to 9, Race.passThroughFilters("20f2"))
+        assertEquals(10 to 9, Race.passThroughFilters("20F2"))
+        assertEquals(10 to 9, Race.passThroughFilters("20fd"))
+        assertEquals("055a0600060e000a0a04", Race.setNoise(NoiseMode.AMBIENT, "20f2").hex())
+        assertEquals("055a0600060e000a0904", Race.setNoise(NoiseMode.TALKTHRU, "20f2").hex())
+        // ANC and off don't change.
+        assertEquals("055a0600060e000a0100", Race.setNoise(NoiseMode.ANC, "20f2").hex())
+        assertEquals("055a0400060e000b", Race.setNoise(NoiseMode.OFF, "20f2").hex())
+        // Status (reply or push) read back the same way.
+        val filter9 = h("055d0800" + "0109" + "0500" + "00" + "09" + "0000")
+        val filter10 = h("055b0800" + "0109" + "0500" + "00" + "0a" + "0000")
+        assertEquals(NoiseMode.AMBIENT, Race.parseNoise(filter9, "2089"))
+        assertEquals(NoiseMode.TALKTHRU, Race.parseNoise(filter10, "2089"))
+        assertEquals(NoiseMode.TALKTHRU, Race.parseNoise(filter9, "20f2"))
+        assertEquals(NoiseMode.AMBIENT, Race.parseNoise(filter10, "20f2"))
+        assertEquals(NoiseMode.ANC, Race.parseNoise(h("055b0800" + "0109" + "0500" + "00" + "01" + "6400"), "20f2"))
+        assertEquals(NoiseMode.OFF, Race.parseNoise(h("055d0800" + "0109" + "0500" + "00" + "00" + "0000"), "20f2"))
+    }
+
     @Test fun commonConfigReplies() {
         assertEquals(true to 60, Race.parseAutoOff(h("055b0900832c" + "00" + "0100" + "0100" + "100e")))
         assertEquals(false to 30, Race.parseAutoOff(h("055b0900832c" + "00" + "0100" + "0000" + "0807")))
