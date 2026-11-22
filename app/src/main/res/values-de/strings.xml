@@ -109,6 +109,11 @@
     <string name="minutes">%1$d min</string>
     <string name="voice_prompts">Sprachansagen</string>
     <string name="voice_prompts_sub">Gesprochene Ansagen; wenn aus, spielt das Gerät nur Töne</string>
+    <string name="in_ear_play_pause">Automatisch abspielen/pausieren</string>
+    <string name="in_ear_play_pause_sub">Pausiert, wenn du einen Ohrhörer herausnimmst, und spielt weiter, wenn du ihn wieder einsetzt</string>
+    <string name="find_left">Linken Ohrhörer klingeln lassen</string>
+    <string name="find_right">Rechten Ohrhörer klingeln lassen</string>
+    <string name="find_sub">Spielt einen lauten Ton ab, damit du ihn wiederfindest. Nimm die Ohrhörer vorher aus den Ohren.</string>
     <string name="feedback_tone">Bestätigungstöne</string>
     <string name="rename">Umbenennen</string>
     <string name="rename_title">Gerät umbenennen</string>

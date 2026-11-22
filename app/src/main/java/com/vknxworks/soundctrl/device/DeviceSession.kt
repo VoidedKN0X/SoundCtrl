@@ -1,10 +1,13 @@
 package com.vknxworks.soundctrl.device
 
 import android.content.Context
+import com.vknxworks.soundctrl.ble.DeviceLink
 import com.vknxworks.soundctrl.ble.GattLink
 import com.vknxworks.soundctrl.ble.Pipe
+import com.vknxworks.soundctrl.ble.SppLink
 import com.vknxworks.soundctrl.proto.Aa
 import com.vknxworks.soundctrl.proto.AaFrame
+import com.vknxworks.soundctrl.proto.AirohaFamily
 import com.vknxworks.soundctrl.proto.Battery
 import com.vknxworks.soundctrl.proto.Catalog
 import com.vknxworks.soundctrl.proto.Control
@@ -16,6 +19,7 @@ import com.vknxworks.soundctrl.proto.P4Assembler
 import com.vknxworks.soundctrl.proto.P4Message
 import com.vknxworks.soundctrl.proto.Product
 import com.vknxworks.soundctrl.proto.Race
+import com.vknxworks.soundctrl.proto.RaceAssembler
 import com.vknxworks.soundctrl.proto.SpeakerDfuCommands
 import com.vknxworks.soundctrl.proto.SpeakerInfo
 import com.vknxworks.soundctrl.proto.SpeakerInfoParser
@@ -74,11 +78,31 @@ data class DeviceState(
     val gestures: Map<Int, Int> = emptyMap(),
     val deviceIndex: Int = 0,
     val mtu: Int = 23,
-)
+    /** Airoha devices: the chip family read from the device (null = not read, or not an Airoha device). */
+    val airoha: AirohaFamily? = null,
+    /** Airoha devices: connected over classic Bluetooth (RFCOMM) rather than BLE. */
+    val classic: Boolean = false,
+    /** Airoha earbuds: is the second earbud connected to the first, and is the first one the right one? */
+    val partnerPresent: Boolean? = null,
+    val agentRight: Boolean? = null,
+    /** Airoha: in-ear detection pauses and resumes playback. */
+    val inEarPlayPause: Boolean? = null,
+    /** Airoha: which earbud SoundCtrl asked to ring. */
+    val ringingLeft: Boolean = false,
+    val ringingRight: Boolean = false,
+) {
+    /** Battery, case battery and Find my buds are established for this Airoha device. */
+    val airohaBasics: Boolean get() = control == Control.HP_AIROHA && airoha?.hasBasics == true && (pid ?: "") !in AirohaFamily.OWN_CONTROL_PIDS
+    /** Noise control, auto power-off and auto play/pause are established for this Airoha device. */
+    val airohaSettings: Boolean get() = airohaBasics && airoha?.hasMmiSettings == true
+}
 
 /** One connected JBL device. All protocol traffic for it goes through here. */
 class DeviceSession(context: Context, val address: String, knownPid: String?, val le: Boolean) {
-    val link = GattLink(context.applicationContext, address)
+    private val appContext = context.applicationContext
+    /** BLE GATT, or classic RFCOMM for Airoha devices (picked in [start]). */
+    var link: DeviceLink = GattLink(appContext, address)
+        private set
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val _state = MutableStateFlow(DeviceState(address, pid = knownPid, product = Catalog.find(knownPid)))
     val state: StateFlow<DeviceState> = _state
@@ -87,6 +111,9 @@ class DeviceSession(context: Context, val address: String, knownPid: String?, va
     val aaFrames: SharedFlow<AaFrame> = _aa
     private val _p4 = MutableSharedFlow<P4Message>(extraBufferCapacity = 64, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     val p4Messages: SharedFlow<P4Message> = _p4
+    private val _race = MutableSharedFlow<ByteArray>(extraBufferCapacity = 64, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    /** Whole RACE frames from an Airoha device. */
+    val raceFrames: SharedFlow<ByteArray> = _race
     private var reader: Job? = null
 
     /** Blocks setting changes while an update runs. */
@@ -94,21 +121,40 @@ class DeviceSession(context: Context, val address: String, knownPid: String?, va
 
     suspend fun start(): Boolean {
         _state.update { it.copy(connecting = true, failed = false) }
-        var ok = link.connect(le)
-        if (!ok && le) ok = link.connect(false)
+        var ok = false
+        // Airoha earbuds (Tour Pro 3 and others) are controlled over classic Bluetooth by the JBL app: try Airoha's
+        // RFCOMM service first for them, and for paired devices whose model isn't known yet. BLE GATT otherwise.
+        val known = _state.value.product
+        if (known?.control == Control.HP_AIROHA || (known == null && !le)) {
+            val spp = SppLink(appContext, address)
+            if (spp.connect()) {
+                link = spp
+                ok = true
+                _state.update { it.copy(classic = true) }
+            }
+        }
+        if (!ok) {
+            val gatt = GattLink(appContext, address)
+            link = gatt
+            ok = gatt.connect(le)
+            if (!ok && le) ok = gatt.connect(false)
+        }
         if (!ok) {
             _state.update { it.copy(connecting = false, failed = true, connected = false) }
             return false
         }
         reader?.cancel()
         val assembler = P4Assembler()
+        val raceAssembler = RaceAssembler()
+        val l = link
         reader = scope.launch {
-            link.incoming.collect { b ->
-                if (b.isNotEmpty() && b[0] == Aa.ID) Aa.parse(b)?.let { _aa.tryEmit(it) }
+            l.incoming.collect { b ->
+                if (l.pipe == Pipe.RACE) raceAssembler.accept(b).forEach { _race.tryEmit(it) }
+                else if (b.isNotEmpty() && b[0] == Aa.ID) Aa.parse(b)?.let { _aa.tryEmit(it) }
                 else assembler.accept(b)?.let { _p4.tryEmit(it) }
             }
         }
-        scope.launch { link.connected.collect { c -> _state.update { it.copy(connected = c) } } }
+        scope.launch { l.connected.collect { c -> _state.update { it.copy(connected = c) } } }
         _state.update { it.copy(connected = true, connecting = false, mtu = link.mtu) }
         detectControl()
         refresh()
@@ -153,6 +199,7 @@ class DeviceSession(context: Context, val address: String, knownPid: String?, va
     private suspend fun detectControl() {
         if (link.pipe == Pipe.RACE) {
             _state.update { it.copy(control = Control.HP_AIROHA) }
+            identifyAiroha()
             return
         }
         val known = _state.value.product
@@ -278,10 +325,69 @@ class DeviceSession(context: Context, val address: String, knownPid: String?, va
         }
     }
 
+    private suspend fun <R> race(frame: ByteArray, timeoutMs: Long = 2500, pick: (ByteArray) -> R?): R? =
+        request(raceFrames, listOf(frame), timeoutMs, pick)
+
+    /**
+     * Reads the chip name and, when the model isn't known yet, the model name (the product id on JBL models),
+     * as the Airoha SDK does right after connecting (`AirohaConnector`).
+     */
+    private suspend fun identifyAiroha() {
+        val chip = race(Race.getChipName()) { Race.parseChipName(it) } ?: return
+        val family = AirohaFamily.fromChipName(chip)
+        _state.update { it.copy(airoha = family) }
+        if (_state.value.product == null && family != AirohaFamily.AB1562) {
+            val model = race(Race.getModelName(family)) { Race.parseModelName(it) }?.lowercase()
+            val prod = Catalog.find(model)
+            if (prod != null) _state.update { it.copy(pid = prod.pid, product = prod) }
+        }
+    }
+
     private suspend fun refreshAiroha() {
-        for (role in listOf(Race.AGENT, Race.PARTNER)) {
-            request(link.incoming, listOf(Race.getFwVersion(role)), 2500) { b -> Race.parseFwVersion(b)?.takeIf { it.first == role }?.second }
+        if (_state.value.airoha == null) identifyAiroha()
+        val basics = _state.value.airohaBasics
+        var partner = true
+        if (basics) {
+            val right = race(Race.getAgentIsRight()) { Race.parseAgentIsRight(it) }
+            partner = race(Race.getAvailableDestinations()) { Race.parsePartnerExists(it) } ?: true
+            _state.update { it.copy(agentRight = right, partnerPresent = partner) }
+        }
+        for (role in if (partner) listOf(Race.AGENT, Race.PARTNER) else listOf(Race.AGENT)) {
+            race(Race.getFwVersion(role)) { b -> Race.parseFwVersion(b)?.takeIf { it.first == role }?.second }
                 ?.let { v -> _state.update { if (role == Race.AGENT) it.copy(firmware = v) else it.copy(partnerFirmware = v) } }
+        }
+        if (basics) refreshAirohaBattery(partner)
+        if (_state.value.airohaSettings) {
+            race(Race.getNoise()) { Race.parseNoise(it) }?.let { m -> _state.update { it.copy(noise = m) } }
+            race(Race.getCommonConfig(Race.MODULE_AUTO_POWER_OFF)) { Race.parseAutoOff(it) }?.let { v -> _state.update { it.copy(autoOff = v) } }
+            race(Race.getCommonConfig(Race.MODULE_IN_EAR_PLAY_PAUSE)) { Race.parseInEarPlayPause(it) }?.let { v -> _state.update { it.copy(inEarPlayPause = v) } }
+        }
+    }
+
+    /** Each earbud's battery and charging state, then the case. Agent/partner become left/right by the agent's side. */
+    private suspend fun refreshAirohaBattery(partner: Boolean) {
+        val roles = if (partner) listOf(Race.AGENT, Race.PARTNER) else listOf(Race.AGENT)
+        val levels = mutableMapOf<Int, Battery>()
+        for (role in roles) {
+            val level = race(Race.getBattery(role)) { b -> Race.parseBattery(b)?.takeIf { it.first == role }?.second } ?: continue
+            val charging = race(Race.getChargeInfo(role)) { b -> Race.parseChargeInfo(b)?.takeIf { it.first == role }?.second } ?: false
+            levels[role] = Battery(level, charging)
+        }
+        val case = race(Race.getCaseBattery()) { Race.parseCaseBattery(it) }
+        _state.update { s ->
+            val right = s.agentRight
+            if (right == null) {
+                // Without the agent's side the earbuds can't be told apart: show the one SoundCtrl talks to as the battery.
+                s.copy(battery = levels[Race.AGENT] ?: s.battery, batteryCase = case?.let { Battery(it, false) } ?: s.batteryCase)
+            } else {
+                val agent = levels[Race.AGENT]
+                val other = levels[Race.PARTNER]
+                s.copy(
+                    batteryLeft = (if (right) other else agent) ?: s.batteryLeft,
+                    batteryRight = (if (right) agent else other) ?: s.batteryRight,
+                    batteryCase = case?.let { Battery(it, false) } ?: s.batteryCase,
+                )
+            }
         }
     }
 
@@ -295,14 +401,38 @@ class DeviceSession(context: Context, val address: String, knownPid: String?, va
                 p4Set(HeadphoneP4.setNoise(mode, s.product?.has("asc") == true, level))
             }
             Control.HP_AA -> aaAck(Aa.hpSetAnc(mode == NoiseMode.ANC), Aa.HP_SET_ANC)
+            Control.HP_AIROHA -> s.airohaSettings && race(Race.setNoise(mode), 3000) { Race.parseSetNoise(it, mode) } == true
             else -> false
         }
         if (ok) _state.update { it.copy(noise = mode) }
         return ok
     }
 
-    suspend fun setAutoOff(on: Boolean, minutes: Int): Boolean =
-        p4Set(HeadphoneP4.setAutoOff(on, minutes)).also { if (it) _state.update { s -> s.copy(autoOff = on to minutes) } }
+    suspend fun setAutoOff(on: Boolean, minutes: Int): Boolean {
+        val ok = when (_state.value.control) {
+            Control.HP_P4 -> p4Set(HeadphoneP4.setAutoOff(on, minutes))
+            Control.HP_AIROHA -> _state.value.airohaSettings &&
+                race(Race.setAutoOff(on, minutes)) { Race.parseSetCommonConfig(it, Race.MODULE_AUTO_POWER_OFF) } == true
+            else -> false
+        }
+        if (ok) _state.update { s -> s.copy(autoOff = on to minutes) }
+        return ok
+    }
+
+    /** Airoha: pause when an earbud comes out, play when it goes back in. */
+    suspend fun setInEarPlayPause(on: Boolean): Boolean {
+        val ok = _state.value.airohaSettings &&
+            race(Race.setInEarPlayPause(on)) { Race.parseSetCommonConfig(it, Race.MODULE_IN_EAR_PLAY_PAUSE) } == true
+        if (ok) _state.update { it.copy(inEarPlayPause = on) }
+        return ok
+    }
+
+    /** Airoha: ring the left ([Race.FIND_LEFT]) or right earbud, or stop it. */
+    suspend fun findBud(target: Int, ring: Boolean): Boolean {
+        val ok = _state.value.airohaBasics && race(Race.findMe(target, ring)) { Race.parseFindMe(it) } == true
+        if (ok) _state.update { if (target == Race.FIND_LEFT) it.copy(ringingLeft = ring) else it.copy(ringingRight = ring) }
+        return ok
+    }
 
     suspend fun setVoicePrompts(on: Boolean): Boolean =
         p4Set(HeadphoneP4.setVoicePrompts(on, _state.value.promptVolume)).also { if (it) _state.update { s -> s.copy(voicePrompts = on) } }

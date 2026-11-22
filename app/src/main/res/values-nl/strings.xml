@@ -100,6 +100,11 @@
     <string name="minutes">%1$d min</string>
     <string name="voice_prompts">Gesproken meldingen</string>
     <string name="voice_prompts_sub">Gesproken meldingen; uit betekent dat het toestel alleen tonen speelt</string>
+    <string name="in_ear_play_pause">Automatisch afspelen/pauzeren</string>
+    <string name="in_ear_play_pause_sub">Pauzeert als je een oortje uitneemt en speelt verder als je het terug insteekt</string>
+    <string name="find_left">Linkeroortje laten piepen</string>
+    <string name="find_right">Rechteroortje laten piepen</string>
+    <string name="find_sub">Speelt een luid geluid af zodat je het terugvindt. Haal de oortjes eerst uit je oren.</string>
     <string name="feedback_tone">Feedbacktonen</string>
     <string name="rename">Naam wijzigen</string>
     <string name="rename_title">Toestel een andere naam geven</string>

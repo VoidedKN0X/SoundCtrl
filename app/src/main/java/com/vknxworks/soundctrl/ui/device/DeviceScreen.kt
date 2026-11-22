@@ -18,6 +18,8 @@ import androidx.compose.material.icons.outlined.Equalizer
 import androidx.compose.material.icons.outlined.GraphicEq
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Hearing
+import androidx.compose.material.icons.outlined.Headphones
+import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.LinkOff
 import androidx.compose.material.icons.outlined.NotificationsActive
@@ -50,6 +52,7 @@ import com.vknxworks.soundctrl.proto.Battery
 import com.vknxworks.soundctrl.proto.Control
 import com.vknxworks.soundctrl.proto.HeadphoneP4
 import com.vknxworks.soundctrl.proto.NoiseMode
+import com.vknxworks.soundctrl.proto.Race
 import com.vknxworks.soundctrl.ui.components.ConfirmDialog
 import com.vknxworks.soundctrl.ui.components.CtrlButton
 import com.vknxworks.soundctrl.ui.components.CtrlHeroCard
@@ -136,8 +139,8 @@ private fun DeviceBody(s: DeviceSession, st: DeviceState, onUpdate: () -> Unit, 
 
         // ----- Sound -----
         Group(stringResource(R.string.group_sound), footer = stringResource(R.string.needs_confirming_footer)) {
-            when (st.control) {
-                Control.HP_P4 -> GroupChoice(
+            when {
+                st.control == Control.HP_P4 || st.airohaSettings -> GroupChoice(
                     stringResource(R.string.noise_control),
                     listOf(
                         NoiseMode.OFF to stringResource(R.string.noise_off),
@@ -147,13 +150,13 @@ private fun DeviceBody(s: DeviceSession, st: DeviceState, onUpdate: () -> Unit, 
                     ),
                     st.noise, icon = Icons.Outlined.Hearing, fallbackLabel = stringResource(R.string.not_reported),
                 ) { m -> act { s.setNoise(m) } }
-                Control.HP_AA -> {
+                st.control == Control.HP_AA -> {
                     GroupSwitch(stringResource(R.string.anc), checked = st.noise == NoiseMode.ANC, icon = Icons.Outlined.Hearing) { on ->
                         act { s.setNoise(if (on) NoiseMode.ANC else NoiseMode.OFF) }
                     }
                     Disabled(stringResource(R.string.ambient_talkthru), Icons.Outlined.Hearing)
                 }
-                Control.HP_AIROHA -> Disabled(stringResource(R.string.noise_control), Icons.Outlined.Hearing)
+                st.control == Control.HP_AIROHA -> Disabled(stringResource(R.string.noise_control), Icons.Outlined.Hearing)
                 else -> {}
             }
             if (st.control == Control.SPEAKER_AA && st.product?.has("eqindoor") == true) {
@@ -177,6 +180,25 @@ private fun DeviceBody(s: DeviceSession, st: DeviceState, onUpdate: () -> Unit, 
                     }
                 } else {
                     Disabled(stringResource(R.string.gestures), Icons.Outlined.TouchApp)
+                }
+                if (st.airohaSettings) {
+                    GroupSwitch(stringResource(R.string.in_ear_play_pause), stringResource(R.string.in_ear_play_pause_sub), st.inEarPlayPause == true, Icons.Outlined.PlayCircle) { on ->
+                        act { s.setInEarPlayPause(on) }
+                    }
+                }
+                if (st.airohaBasics) {
+                    // Without the second earbud only the one the phone talks to can ring (as in the JBL app).
+                    val alone = st.partnerPresent == false
+                    if (!alone || st.agentRight == false) {
+                        GroupSwitch(stringResource(R.string.find_left), stringResource(R.string.find_sub), st.ringingLeft, Icons.Outlined.Headphones) { on ->
+                            act { s.findBud(Race.FIND_LEFT, on) }
+                        }
+                    }
+                    if (!alone || st.agentRight == true) {
+                        GroupSwitch(stringResource(R.string.find_right), stringResource(R.string.find_sub), st.ringingRight, Icons.Outlined.Headphones) { on ->
+                            act { s.findBud(Race.FIND_RIGHT, on) }
+                        }
+                    }
                 }
             }
         }
@@ -218,6 +240,15 @@ private fun DeviceBody(s: DeviceSession, st: DeviceState, onUpdate: () -> Unit, 
                 GroupSwitch(stringResource(R.string.voice_prompts), stringResource(R.string.voice_prompts_sub), st.voicePrompts == true, Icons.Outlined.RecordVoiceOver) { on2 ->
                     act { s.setVoicePrompts(on2) }
                 }
+            } else if (st.airohaSettings) {
+                // The JBL app's choices for earbuds: 30 min, 1 h, 2 h or never. "Never" keeps the last time, switched off.
+                val (on, minutes) = st.autoOff ?: (false to 0)
+                val opts = listOf(0, 30, 60, 120).map { m -> m to if (m == 0) stringResource(R.string.auto_off_never) else stringResource(R.string.minutes, m) }
+                GroupChoice(stringResource(R.string.auto_off), opts, if (st.autoOff == null) null else if (on) minutes else 0,
+                    icon = Icons.Outlined.PowerSettingsNew, fallbackLabel = stringResource(R.string.not_reported)) { m ->
+                    act { if (m == 0) s.setAutoOff(false, if (minutes > 0) minutes else 30) else s.setAutoOff(true, m) }
+                }
+                Disabled(stringResource(R.string.voice_prompts), Icons.Outlined.RecordVoiceOver)
             } else if (headphones) {
                 Disabled(stringResource(R.string.auto_off), Icons.Outlined.PowerSettingsNew)
                 Disabled(stringResource(R.string.voice_prompts), Icons.Outlined.RecordVoiceOver)

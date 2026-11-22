@@ -17,6 +17,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Your devices in one list:** headphones, earbuds and speakers, remembered on this phone with their model, firmware and last battery level. **Look for devices** finds JBL devices nearby.
 - **Battery:** the speaker's level, or left and right earbud and the case where the device reports them, with a charging mark.
 - **Headphones and earbuds (2024-2025 models, "protocol 4"):** noise control (off, noise cancelling, Ambient Aware, TalkThru), touch gestures for each tap and swipe the device reports, auto power-off and voice prompts.
+- **Airoha earbuds and headphones (Tour Pro 3, Live Buds 3, Tune 770NC, Live Free 2, …):** connected over classic Bluetooth like the JBL app does. Battery of each earbud and the case with a charging mark, noise control (off, noise cancelling, Ambient Aware, TalkThru), auto power-off, auto play/pause when you take an earbud out, and ringing a lost earbud. Which of these show depends on the chip inside; the rest stays **Needs confirming**.
 - **Older headphones:** battery, firmware and noise cancelling on/off.
 - **Speakers:** rename, feedback tones, PartyBoost, Auracast on/off, stereo channel (left, right or both), Find (plays a sound), and Indoor/Outdoor sound on the BoomBox.
 - **Firmware update:** **Check for update** asks Harman's public file server for your model; the download is checked against its MD5. You can also install a file you have, if you give its MD5 and version. Only newer firmware is installed, on a charged (50 % or more) and idle device, with progress, Stop and continuing where it stopped. A download that breaks off is retried by itself and can be resumed: only the missing part is fetched again.
@@ -38,7 +39,8 @@ SoundCtrl knows every model in the JBL apps' own lists (about 160). What it can 
 | Newer speakers (GO 5, Xtreme 5, Grip, BoomBox 4, Pulse 6, Clip 6, Charge/Flip Essential 3 SE) | Rename, feedback tones, Auracast | Check and install (untested) |
 | Older speakers (Charge 3/4, Flip 4, Pulse 3, Xtreme 2, BoomBox 1, Flip 3, Xtreme) | As above where the protocol matches | Check only: "Update from this app isn't available for this model yet" |
 | 2024-2025 headphones and earbuds (Tour One M3/M4, Tour Pro 4, Live 680NC/780NC, Live Buds/Beam/Flex 4, Tune 530BT, Tune/Wave/Vibe 3, Endurance, …) | Noise control, gestures, auto-off, voice prompts | Check and install (untested) |
-| Other BES, Realtek and Airoha headphones and earbuds | Battery, firmware; ANC on/off on some | Check only: not available yet |
+| Airoha earbuds and headphones (Tour Pro 3, Live Buds 3, Tune 770NC, Live Free 2, Reflect Aero, …) | Depends on the chip SoundCtrl reads from the device. AB1568/AB158x chips (the Tour Pro 3's family): battery (left, right, case), noise control, auto power-off, auto play/pause, find my buds. AB155x chips: battery and find my buds. AB1562 chips and the Quantum 910 family: firmware only. All untested | Check only: not available yet |
+| Other BES and Realtek headphones and earbuds | Battery, firmware; ANC on/off on some | Check only: not available yet |
 | Everest / Reflect Aware (Avnera) | Not available | Not available |
 
 [PROTOCOL.md](PROTOCOL.md) has the details, model by model and feature by feature, and marks what was verified in the JBL apps' code and what is inferred.
@@ -99,7 +101,7 @@ Close the JBL app on other phones first: a device usually talks to one app at a 
 | Permission | What SoundCtrl uses it for |
 | --- | --- |
 | Nearby devices (Bluetooth scan, flagged "never for location") | Finding JBL devices. Android can't use it to work out where you are. |
-| Nearby devices (Bluetooth connect) | Talking to your JBL devices. |
+| Nearby devices (Bluetooth connect) | Talking to your JBL devices, over Bluetooth Low Energy or, for Airoha earbuds such as the Tour Pro 3, over classic Bluetooth (the same permission covers both). |
 | Internet | Only **Check for update** and the firmware download, from Harman's public file server, when you tap them. Every other address is refused in the code. |
 | Foreground service (connected device) | Keeping a firmware update going, with its notification. Only during an update. |
 | Notifications | The update progress notification. |

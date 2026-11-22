@@ -4,6 +4,20 @@ What changed in each SoundCtrl release. Every release on the [Releases page](htt
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+### New
+
+- **Real control of the JBL Tour Pro 3 and other Airoha earbuds and headphones.** Until now SoundCtrl could only read the firmware version of these models and every setting showed "Needs confirming on your device". It now talks to them the way the official JBL Headphones app does: over classic Bluetooth, through Airoha's own serial (RFCOMM) channel, instead of only Bluetooth Low Energy. When you open a device whose model is an Airoha model, or a paired JBL device whose model isn't known yet, SoundCtrl first tries that channel and falls back to Bluetooth Low Energy if the device doesn't offer it. No new permission is needed: the existing "Nearby devices" permission covers it, and there is still no location permission.
+- **The chip inside decides what you get.** Right after connecting, SoundCtrl reads the chip name and model from the device, as the JBL app does, and only shows controls whose commands were established for that chip:
+  - **Battery:** left and right earbud (with a charging mark) and the charging case, on Airoha models except those with an AB1562 chip and the Quantum 910 family.
+  - **Noise control:** off, noise cancelling, Ambient Aware and TalkThru, on AB1568 and AB158x chips (the Tour Pro 3's family; SoundCtrl reads which chip your model has when it connects).
+  - **Auto power-off:** 30 minutes, 1 hour, 2 hours or never, the same choices the JBL app offers for earbuds (AB1568 and AB158x chips).
+  - **Auto play/pause:** pauses when you take an earbud out and plays again when you put it back (AB1568 and AB158x chips).
+  - **Find my buds:** two switches to make the left or right earbud play a loud sound, and to stop it. Take the earbuds out of your ears first. If only one earbud is connected, only that one is offered.
+- Touch gestures, voice prompts, EQ, spatial sound, Hi-Res/LDAC, low latency, adaptive noise cancelling levels and the smart case settings are not established yet for these models and stay "Needs confirming on your device". Firmware updates for Airoha models are still "check only".
+- **Not tested on a real device yet.** The commands come from reading the JBL app's code. A Bluetooth log from a real Tour Pro 3 confirmed that the JBL app uses this classic Bluetooth channel and that the earbuds answer in the formats SoundCtrl expects, but SoundCtrl itself hasn't been run against the earbuds. Please report what works and what doesn't.
+
 ## v0.4.2 (2026-11-22)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published.

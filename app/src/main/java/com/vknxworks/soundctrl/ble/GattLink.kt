@@ -23,20 +23,30 @@ import java.util.UUID
 /** Which byte pipe the device offers. */
 enum class Pipe { HARMAN, RACE }
 
+/** A connection to one device that carries frames both ways: BLE GATT ([GattLink]) or classic RFCOMM ([SppLink]). */
+interface DeviceLink {
+    val incoming: SharedFlow<ByteArray>
+    val connected: StateFlow<Boolean>
+    val mtu: Int
+    val pipe: Pipe?
+    suspend fun write(bytes: ByteArray): Boolean
+    fun close()
+}
+
 /**
  * One BLE GATT connection to a JBL device: the Harman pipe (service …0000, notify …0001, write …0002,
  * the same in both JBL apps) or Airoha's RACE pipe. Writes are queued and wait for the write callback.
  */
 @SuppressLint("MissingPermission") // Callers check BLUETOOTH_CONNECT first.
-class GattLink(private val context: Context, val address: String) {
+class GattLink(private val context: Context, val address: String) : DeviceLink {
     private val _incoming = MutableSharedFlow<ByteArray>(extraBufferCapacity = 64, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    val incoming: SharedFlow<ByteArray> = _incoming
+    override val incoming: SharedFlow<ByteArray> = _incoming
     private val _connected = MutableStateFlow(false)
-    val connected: StateFlow<Boolean> = _connected
+    override val connected: StateFlow<Boolean> = _connected
 
-    var mtu = 23
+    override var mtu = 23
         private set
-    var pipe: Pipe? = null
+    override var pipe: Pipe? = null
         private set
 
     private var gatt: BluetoothGatt? = null
@@ -126,7 +136,7 @@ class GattLink(private val context: Context, val address: String) {
     }
 
     /** Writes one frame (with response) and waits for the stack to confirm it. */
-    suspend fun write(bytes: ByteArray): Boolean = writeLock.withLock {
+    override suspend fun write(bytes: ByteArray): Boolean = writeLock.withLock {
         val g = gatt ?: return false
         val c = tx ?: return false
         val done = CompletableDeferred<Boolean>().also { pendingWrite = it }
@@ -135,7 +145,7 @@ class GattLink(private val context: Context, val address: String) {
         withTimeoutOrNull(6_000) { done.await() } == true
     }
 
-    fun close() {
+    override fun close() {
         _connected.value = false
         try {
             gatt?.disconnect()

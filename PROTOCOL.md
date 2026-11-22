@@ -1,6 +1,6 @@
 # SoundCtrl protocol notes
 
-How JBL headphones, earbuds and speakers are controlled and updated, as far as it could be established from the two official apps, for interoperability with your own devices. Nothing here was captured from a real device: **SoundCtrl has not been tested on a real JBL device yet.**
+How JBL headphones, earbuds and speakers are controlled and updated, as far as it could be established from the two official apps, for interoperability with your own devices. Apart from the transport facts in §7.1, nothing here was captured from a real device: **SoundCtrl has not been tested on a real JBL device yet.**
 
 Sources (reverse engineered with REA / JADX, class and method names only, no code copied):
 
@@ -20,7 +20,8 @@ Markers: **[V]** verified in the app's code; **[I]** inferred (SoundCtrl's own c
 | Other services carrying the same two characteristics | a per-product BR/EDR GATT service (`GattControllerImpl.findBrEdrUUidByPid`), or GAP `1801` | [V]; SoundCtrl simply searches every service for the two characteristics [I] |
 | MTU | the apps request 512 | [V] `GattControllerImpl` (requestMtu 512), headphone `BleDevice.requestMtu` |
 | Airoha RACE service | `5052494d-2dab-0341-6972-6f6861424c45`, TX `43484152-2dab-3241-…`, RX `43484152-2dab-3141-…` | [V] `com.airoha.liblinker.constant.UuidTable` |
-| SPP (classic RFCOMM) | `00001101-…` | [V] `AppConfig.sppUUID`; SoundCtrl uses BLE GATT only [I] |
+| SPP (classic RFCOMM), speakers | `00001101-…` | [V] `AppConfig.sppUUID`; SoundCtrl doesn't use it for speakers [I] |
+| Airoha SPP (classic RFCOMM) | `00000000-0000-0000-0099-AABBCCDDEEFF`, secure socket found through SDP | [V] `com.airoha.liblinker.constant.UuidTable.AIROHA_SPP_UUID`, `SppController.createRfcomm`; used by SoundCtrl for Airoha devices, see §7 |
 | Advertising | manufacturer data company `0x0057` (speakers) or `0x0ECB` (headphones), or service data `FDDF` (protocol 4), `DFFD`, `FC69` | [V] `DefaultScanFilter`, `SpeakerBleBroadCastParser.parseBleScanRecordData`, headphone `qi.n`/`qi.b` |
 | Product id in the advert | first two bytes, little-endian (e.g. `4f 20` = `204f`, JBL Flip 6) | [V] `SpeakerBleBroadCastParser.parseAdvPacketFormat2/6` |
 
@@ -158,13 +159,16 @@ The product list's `platform` and `otaConfig.protocolType` decide [V] (`ControlF
 | --- | --- | --- | --- | --- | --- |
 | Scan, connect, remember | yes [V] | yes [V] | yes [V] | yes [V] | yes (RACE pipe) [V] |
 | Model, firmware | yes [V] | yes [V] | yes [V] | yes [V] | firmware [V] |
-| Battery (main / L / R / case) | yes [V] | yes [V] | yes [V] | yes [V] | needs confirming |
+| Battery (main / L / R / case) | yes [V] | yes [V] | yes [V] | yes [V] | L / R / case with charging [V] (not AB1562, not Quantum 910) |
 | EQ presets, custom EQ | Indoor/Outdoor (BoomBox) [V]; rest needs confirming | needs confirming | needs confirming | needs confirming | needs confirming |
-| ANC / Ambient / TalkThru | — | — | yes [V] | ANC only [V] | needs confirming |
+| ANC / Ambient / TalkThru | — | — | yes [V] | ANC only [V] | off / ANC / Ambient Aware / TalkThru on AB1568 and AB158x chips [V]; levels and Adaptive ANC need confirming |
 | Gestures | — | — | yes, for the gestures the device reports [V] | needs confirming | needs confirming |
-| Auto-off | — | — | yes [V] (unit I) | needs confirming | needs confirming |
+| Auto-off | — | — | yes [V] (unit I) | needs confirming | 30 / 60 / 120 min or never, AB1568 and AB158x [V] |
 | Voice prompts / feedback tones | yes [V] | yes [V] | yes [V] | needs confirming | needs confirming |
 | Rename | yes [V] | yes [V] | needs confirming | needs confirming | needs confirming |
+| In-ear auto play/pause | — | — | — | — | AB1568 and AB158x [V] |
+| Find my buds (ring left / right) | — | — | — | — | yes [V] (not AB1562, not Quantum 910) |
+| Transport | BLE | BLE | BLE | BLE | classic RFCOMM first (Tour Pro 3: confirmed in use by the JBL app), BLE RACE as fallback |
 | PartyBoost | yes [V] | — | — | — | — |
 | Auracast on/off | yes [V] | yes [V] | — | — | — |
 | Stereo channel | yes [V] | — | — | — | — |
@@ -173,3 +177,53 @@ The product list's `platform` and `otaConfig.protocolType` decide [V] (`ControlF
 | Write firmware | yes [V] (untested) | yes [V] (untested) | yes [V] (untested) | not available | not available |
 
 Out of scope: PersoniFi, JBL/Harman accounts and cloud, product pictures, per-app EQ.
+
+## 7. Airoha headphones and earbuds (control)
+
+Source: `com.harman.cmdctrl.imp.control.u3.lea.TourPro3LeControl` → `LeaAhBaseControl` → `gi.a` (`AhDevice`) → `com.airoha.adapter.harman.AirohaHmSDK` / `AirohaDeviceConnector` / `AirohaDeviceStatusControl` → Airoha SDK (`com.airoha.sdk.AB155xDeviceControl`, `AB1568DeviceControl`, `AB158xDeviceControl`) → stages in `com.airoha.libmmi*`, `com.airoha.libcommon`, `com.airoha.adapter.harman.stage`.
+
+### 7.1 Picking the controller and the transport
+
+- The product list (`product_list.json`) gives the Tour Pro 3 (`20f2`, case `20fd`) `platform` "Airoha", `cmdCtrlList` `TourPro3LeControl` and `connectType` "BT" [V]. Its control talks only through `AhDevice` (`getAhDevice()`) [V].
+- `AhDevice.w` connects with `DeviceProtocol.PROTOCOL_SPP` unless the device was opened as LE Audio (`PROTOCOL_LEA`, then GATT) [V]. `AirohaConnector.connect` builds an `SppLinkParam`, whose UUID is `AIROHA_SPP_UUID` `00000000-0000-0000-0099-AABBCCDDEEFF`; `SppController.createRfcomm` calls `createRfcommSocketToServiceRecord` (secure, found through SDP) [V]. The BLE GATT RACE service (§1) is the same protocol on the LE side.
+- **Confirmed on a real Tour Pro 3** (from the owner's Bluetooth stack log while using the JBL app; no command bytes from the phone were in it): the JBL app opened one secure RFCOMM client socket, found by SDP for `00000000-0000-0000-0099-aabbccddeeff`, and every reply came back on it. The other RFCOMM connection in that log (UUID `df21fe2c-…`) belonged to a different app (Android's Fast Pair), not to the JBL app. No RACE GATT traffic. Replies of the shapes listed below (agent side, NV reads, noise-control set and status pushes, common-config, charge-info acks) were seen on that socket and match the layouts here.
+- The stream is cut into frames as `H4Transport.parseRace` does: start byte `05` (or `15`), length LE16 at [2], frame = length + 4, 6 to 2000 bytes [V] (`RaceAssembler`).
+- After the link is up the SDK reads the chip name (NV key `1002`) and the model name (NV key `1003` on AB158x, `F500` on AB155x/AB1568) [V] (`AirohaConnector`, `CommonStageReadChipName`, `CommonStageGetModelName`). The chip name picks the family: contains AB1562/AB1563 → AB1562; AB1565/AB1568 dual chip → AB1568; starts with AB158/AB157/MT283 → AB158x; AB1565/AB1568 or starts with MT → AB1568; otherwise AB155x [V]. AB1562 devices use `AirohaAB1562DeviceStatusControl` and the Quantum 910 family (`2089`, `209e`, `20a3`, `2149`) `AirohaQ910DeviceStatusControl`; everything else uses `AirohaDeviceStatusControl`, which branches on AB1568/AB158x for noise control, auto-off and play/pause [V]. SoundCtrl offers the features below only where the family matches.
+
+### 7.2 Frames
+
+`05 type len(LE16) raceId(LE16) payload`, len = 2 + payload [V] (`RacePacket.getRaw`). Types: `5A` command wanting a reply, `5B` reply (status in [6] unless noted), `5C` command without reply, `5D` indication (a later answer or a push) [V]. Commands that are for one earbud carry a role byte (0 = the earbud the phone talks to, "agent"; 1 = the other one, "partner"); the agent relays them [V]. The SDK can also wrap a whole frame in `RELAY_PASS_TO_DST` (`0D01`, payload `dstType dstId frame`; reply's inner frame from [8]) [V] (`RaceCmdRelayPass`, `RelayRespExtracter`); none of the features SoundCtrl uses need it.
+
+| Function | Command | Reply | |
+| --- | --- | --- | --- |
+| Agent is right earbud? | `5A 0CD4` | `5B 0CD4 [status][1 = right]` | [V] `MmiStageCheckAgentChannel` |
+| Partner connected? | `5A 0D00` | `5B 0D00 (type id)*` from [6], no status; partner present when a pair has type 5 | [V] `MmiStageGetAvaDst` |
+| Earbud battery | `5A 0CD6 [role]` | `5D 0CD6 [status][role][percent]` | [V] `MmiStageTwsGetBattery` |
+| Earbud charging | `5A 0009 [role]` | `5B` ack, then `5D 0009 [status][role][1 = charging]` (9 bytes) | [V] `MmiStage_GetChargeInfo`, `notifyChargeInfo` |
+| Case battery | `5A 000B` | `5D 000B [status][percent]` (8 bytes), ≤ 0 = not reported | [V] `MmiStage_GetBoxBattery`, `notifyBoxBattery` |
+| Firmware | `5A 1C07 [role]` | `5D 1C07 [status][role][n][ASCII]` | [V] `MmiStageGetFwVersion` |
+| NV read (chip / model name) | `5A 0A00 [key LE16][max LE16]` (max 1000 / 100) | `5B 0A00 [len LE16][data]`, no status; model name = data bytes 20-39 | [V] `CommonStage.genReadNvKeyPacket`, `CommonStageGetModelName` |
+| Noise control status | `5A 0901 [05 00]` | `5B 0901 [05 00][status][filter][gain LE16]`; the device also pushes the same as `5D` | [V] `MmiStageGetAncStatus` |
+| Noise control on | `5A 0E06 [00 0A filter mode]` | `5B 0E06 [status][0A]…` | [V] `MmiStageAncOn` |
+| Noise control off | `5A 0E06 [00 0B]` | `5B 0E06 [status][0B]…` | [V] `MmiStageAncOff` |
+| Auto power-off read | `5A 2C83 [01 00]` | `5B 2C83 [status][01 00][on LE16][seconds LE16]` | [V] `MmiStage_GetAutoPowerOffStatus` |
+| Auto power-off set | `5A 2C82 [01 00][on LE16][seconds LE16]` | `5B 2C82 [status][01 00]` | [V] `MmiStage_SetAutoPowerOffStatus` |
+| In-ear auto play/pause read | `5A 2C83 [02 00]` | `5B 2C83 [status][02 00][on]` | [V] `MmiStageGetInearEnableStatus` |
+| In-ear auto play/pause set | `5A 2C82 [02 00][on]` | `5B 2C82 [status][02 00]` | [V] `MmiStageSetInearEnableStatus` |
+| Find my buds | `5A 2C01 [blink][ring][target]` | `5B 2C01 [status]` | [V] `MmiStageFindMe` |
+
+Values [V]:
+
+- **Filters on AB1568/AB158x** (`SDKAncSettings.AB1568_ANC_INDEX`): 0 off, 1-4 noise cancelling, 9-11 pass-through. The Harman layer maps ANC → 1 (2 in "sports" mode), Ambient Aware → pass-through 1 = 9, TalkThru → pass-through 2 = 10 (`AirohaDeviceStatusControl.convertToAirohaAncIndex`, `SDKAncSettings.queryAirohaFilterAndSetSetting`), with mode 0 for ANC and 4 for the pass-through filters and no gain sent (`execFlow` case SET_ANC_SETTINGS, `disableGainSetting`). So: ANC `00 0A 01 00`, Ambient Aware `00 0A 09 04`, TalkThru `00 0A 0A 04`, off `00 0B`. AB155x uses filters 5-7 for pass-through and isn't offered. Levels, Adaptive ANC (`0E26`) and the sports filter aren't offered [I: SoundCtrl's choice].
+- **Battery**: the agent/partner levels become left/right by the agent's side, as the app does for in-ear status and find-me (`mIsAgentRight`) [V for the app's mapping]. Without the side SoundCtrl shows the agent's level as one battery [I].
+- **Auto power-off**: the app sends minutes × 60 and offers 30, 60, 120 minutes or off for earbuds (`fq.a`, 15 minutes and up to 4 hours only for some headphones); off keeps the last time with "on" 0 (`fq.g.O0`).
+- **Find my buds**: the Tour Pro 3 control only rings or silences (`TourPro3LeControl.setFindMyBuds`); behaviour = ring (lighting unset) gives blink 0, ring 1; silence gives 0, 0. Left (Harman channel 2) → target 0, right (channel 1) → target 1 (`AB155xDeviceControl.doSetFindMyBuds`). Without the partner the app rings only the agent's side.
+
+### 7.3 Not implemented for Airoha (needs confirming)
+
+- **Gestures**: per-chip stages (`MmiStage_Get/SetGesture_1568_v3`, `…_1568`, `MmiStage_GetHeadsetGesture`) that read and write key-map NV keys and reload them on both earbuds; the per-model action tables weren't pinned.
+- **Voice prompts**: on these models the setting is a voice-prompt language (`SetVpLanguageIndex`, 255 = tones) plus an off switch (`SetVpOnoff 0`); how "on" is restored after "off" isn't clear from the code.
+- **EQ** (presets / custom): Airoha PEQ (`AirohaEQControl`, `RACE_HOSTAUDIO_PEQ…`) plus Harman EQ relayed in `RACE_SEND_HM_CMD` (`0093`); not pinned.
+- **Spatial sound, Hi-Res/LDAC, low latency (smart audio/video), Adaptive ANC levels, smart case settings, rename**: separate stages or Harman commands relayed in `0093`; not examined in enough detail.
+- **Firmware writing**: unchanged, see §5.3.
+

@@ -109,6 +109,11 @@
     <string name="minutes">%1$d min</string>
     <string name="voice_prompts">Messages vocaux</string>
     <string name="voice_prompts_sub">Annonces parlées ; désactivées, l\'appareil émet uniquement des tonalités</string>
+    <string name="in_ear_play_pause">Lecture/pause automatique</string>
+    <string name="in_ear_play_pause_sub">Met en pause lorsque vous retirez un écouteur et reprend lorsque vous le remettez</string>
+    <string name="find_left">Faire sonner l\'écouteur gauche</string>
+    <string name="find_right">Faire sonner l\'écouteur droit</string>
+    <string name="find_sub">Émet un son fort pour vous aider à le retrouver. Retirez d\'abord les écouteurs de vos oreilles.</string>
     <string name="feedback_tone">Tonalités de confirmation</string>
     <string name="rename">Renommer</string>
     <string name="rename_title">Renommer l\'appareil</string>
