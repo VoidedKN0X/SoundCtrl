@@ -21,7 +21,6 @@ data class SettingsFileContent(
     val lockTimeout: String? = null,
     val hideScreenshots: Boolean? = null,
     val hideRecents: Boolean? = null,
-    val protocolLog: Boolean? = null,
 ) {
     companion object {
         const val FORMAT = "soundctrl-settings"
@@ -52,7 +51,6 @@ object SettingsFile {
             lockTimeout = s.lockTimeout.name,
             hideScreenshots = s.hideScreenshots,
             hideRecents = s.hideRecents,
-            protocolLog = s.protocolLog,
         ),
     )
 
@@ -73,7 +71,6 @@ object SettingsFile {
             lockTimeout = if (timeout != null && stricter(timeout, current.lockTimeout)) timeout else current.lockTimeout,
             hideScreenshots = current.hideScreenshots || f.hideScreenshots == true,
             hideRecents = current.hideRecents || f.hideRecents == true,
-            protocolLog = f.protocolLog ?: current.protocolLog,
         )
     }
 

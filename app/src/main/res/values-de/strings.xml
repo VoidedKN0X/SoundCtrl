@@ -205,23 +205,6 @@
     <string name="download_interrupted">Der Download wurde bei %1$d %% unterbrochen. Was angekommen ist, bleibt im Speicher; „Download fortsetzen“ holt nur den Rest.</string>
     <string name="resume_download">Download fortsetzen</string>
 
-    <!-- Protocol log -->
-    <string name="group_troubleshooting">Fehlerbehebung</string>
-    <string name="protocol_log">Protokoll-Log</string>
-    <string name="protocol_log_sub">Die Bluetooth-Nachrichten, die SoundCtrl sendet und empfängt, nur im Arbeitsspeicher behalten</string>
-    <string name="protocol_log_open">Protokoll-Log öffnen</string>
-    <string name="protocol_log_footer">Das Log wird nur behalten, solange SoundCtrl geöffnet ist, und nie gespeichert oder irgendwohin gesendet. „Teilen“ oder „Kopieren“ im Log-Bildschirm gibt es an eine App deiner Wahl weiter, zum Beispiel für einen Fehlerbericht. Es kann den Namen und die Seriennummer deines Geräts enthalten.</string>
-    <string name="protocol_log_empty">Das Log ist leer</string>
-    <string name="protocol_log_empty_on">Verbinde dich mit einem Gerät; jede Nachricht an das Gerät und von ihm erscheint hier.</string>
-    <string name="protocol_log_empty_off">Schalte zuerst „Protokoll-Log“ in den Einstellungen ein und verbinde dich dann mit einem Gerät.</string>
-    <string name="protocol_log_note">Neueste zuerst. → an das Gerät gesendet, ← empfangen. Lange Nachrichten werden nach 48 Bytes abgeschnitten; die neuesten %1$d Nachrichten werden behalten.</string>
-    <string name="protocol_log_share">Teilen</string>
-    <string name="protocol_log_copy">Kopieren</string>
-    <string name="protocol_log_copied">Protokoll-Log kopiert</string>
-    <string name="protocol_log_clear">Log leeren</string>
-    <string name="protocol_log_clear_body">Alle Nachrichten im Log werden entfernt. Die Aufzeichnung läuft weiter, solange der Schalter an ist.</string>
-    <string name="protocol_log_subject">SoundCtrl-Protokoll-Log</string>
-
     <!-- Settings export and import -->
     <string name="settings_file_group">Einstellungsdatei</string>
     <string name="settings_file_footer">In der Datei stehen nur die Einstellungen von SoundCtrl: keine Geräte, keine Bluetooth-Adressen und nichts von der App-Sperre. Ein Import kann „In Screenshots ausblenden“ und „In ‚Letzte Apps‘ ausblenden“ einschalten und die Sperrzeit verkürzen, schaltet sie aber nie aus und lässt die Sperre nie länger warten.</string>

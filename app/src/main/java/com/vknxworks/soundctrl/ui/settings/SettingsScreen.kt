@@ -10,8 +10,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BluetoothConnected
 import androidx.compose.material.icons.outlined.DeleteSweep
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.Lock
@@ -42,8 +40,6 @@ import com.vknxworks.soundctrl.ui.components.ScreenTopBar
 import com.vknxworks.soundctrl.ui.lock.AppLock
 import com.vknxworks.soundctrl.ui.lock.PinRequest
 import com.vknxworks.soundctrl.ui.lock.findActivity
-import com.vknxworks.soundctrl.ui.nav.LocalNavigator
-import com.vknxworks.soundctrl.ui.nav.ProtocolLogRoute
 import kotlinx.coroutines.launch
 
 /** Settings, opened from the You page (tap the profile picture). SoundCtrl follows the phone's dark theme. */
@@ -52,7 +48,6 @@ fun SettingsScreen() {
     val context = LocalContext.current
     val c = context.container
     val settings by c.settings.settings.collectAsStateWithLifecycle()
-    val nav = LocalNavigator.current
     var forgetAll by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxSize()) {
         ScreenTopBar(stringResource(R.string.settings))
@@ -64,12 +59,6 @@ fun SettingsScreen() {
                 GroupRow(stringResource(R.string.forget_all), icon = Icons.Outlined.DeleteSweep, onClick = { forgetAll = true })
             }
             PrivacyAndSecurityGroup(settings)
-            Group(stringResource(R.string.group_troubleshooting), footer = stringResource(R.string.protocol_log_footer)) {
-                GroupSwitch(stringResource(R.string.protocol_log), stringResource(R.string.protocol_log_sub), settings.protocolLog, Icons.Outlined.Description) { on ->
-                    c.appScope.launch { c.settings.update { it.copy(protocolLog = on) } }
-                }
-                GroupRow(stringResource(R.string.protocol_log_open), icon = Icons.Outlined.Code, showChevron = true, onClick = { nav.navigate(ProtocolLogRoute) })
-            }
             SettingsFileGroup(settings)
         }
     }

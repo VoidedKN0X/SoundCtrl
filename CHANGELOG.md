@@ -4,6 +4,13 @@ What changed in each SoundCtrl release. Every release on the [Releases page](htt
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+### Removed
+
+- **Protocol log.** The Troubleshooting group in Settings is gone, with its "Protocol log" switch and the "Open protocol log" screen (the list of Bluetooth messages, Copy, Share and Clear log). SoundCtrl no longer keeps any record of the messages it sends to or receives from your devices, not even in memory. If you had the switch on, the saved setting is dropped the next time a setting changes; a settings file exported by an earlier version that still contains it imports without an error and the entry is ignored. Nothing else changes: connecting, device controls, firmware updates, the app lock and the settings file work as before.
+- **Leftover log lines stripped from release builds.** The release build now also removes warning, error and other system-log calls from the code it ships (SoundCtrl itself had none), so nothing ends up in the phone's system log.
+
 ## v0.4.1 (2026-11-21)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published.

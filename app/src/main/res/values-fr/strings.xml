@@ -205,23 +205,6 @@
     <string name="download_interrupted">Le téléchargement s\'est arrêté à %1$d %%. Ce qui est arrivé est gardé en mémoire ; Reprendre le téléchargement ne récupère que le reste.</string>
     <string name="resume_download">Reprendre le téléchargement</string>
 
-    <!-- Protocol log -->
-    <string name="group_troubleshooting">Dépannage</string>
-    <string name="protocol_log">Journal du protocole</string>
-    <string name="protocol_log_sub">Garder les messages Bluetooth que SoundCtrl envoie et reçoit, en mémoire uniquement</string>
-    <string name="protocol_log_open">Ouvrir le journal du protocole</string>
-    <string name="protocol_log_footer">Le journal n\'est conservé que tant que SoundCtrl est ouvert et n\'est jamais enregistré ni envoyé nulle part. Partager ou Copier sur l\'écran du journal le transmet à une application de votre choix, par exemple pour le joindre à un rapport de bug. Il peut contenir le nom et le numéro de série de votre appareil.</string>
-    <string name="protocol_log_empty">Le journal est vide</string>
-    <string name="protocol_log_empty_on">Connectez-vous à un appareil ; chaque message échangé avec lui s\'affiche ici.</string>
-    <string name="protocol_log_empty_off">Activez d\'abord Journal du protocole dans Paramètres, puis connectez-vous à un appareil.</string>
-    <string name="protocol_log_note">Plus récents en premier. → envoyé à l\'appareil, ← reçu. Les longs messages sont coupés après 48 octets ; les %1$d messages les plus récents sont conservés.</string>
-    <string name="protocol_log_share">Partager</string>
-    <string name="protocol_log_copy">Copier</string>
-    <string name="protocol_log_copied">Journal du protocole copié</string>
-    <string name="protocol_log_clear">Effacer le journal</string>
-    <string name="protocol_log_clear_body">Tous les messages du journal sont supprimés. L\'enregistrement continue tant que l\'interrupteur est activé.</string>
-    <string name="protocol_log_subject">Journal du protocole SoundCtrl</string>
-
     <!-- Settings export and import -->
     <string name="settings_file_group">Fichier de paramètres</string>
     <string name="settings_file_footer">Le fichier ne contient que les paramètres de SoundCtrl : aucun appareil, aucune adresse Bluetooth et rien du verrouillage. L\'importation peut activer Masquer dans les captures d\'écran et Masquer dans les applis récentes et raccourcir le délai de verrouillage, mais ne les désactive jamais et n\'allonge jamais ce délai.</string>

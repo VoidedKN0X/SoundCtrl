@@ -107,7 +107,6 @@ fun SettingsFileGroup(settings: AppSettings) {
             if (after.lockTimeout != settings.lockTimeout) add(context.getString(R.string.settings_file_change, context.getString(R.string.lock_again), context.getString(settings.lockTimeout.label), context.getString(after.lockTimeout.label)))
             if (after.hideScreenshots != settings.hideScreenshots) add(context.getString(R.string.settings_file_change, context.getString(R.string.hide_screenshots), onOff(settings.hideScreenshots), onOff(after.hideScreenshots)))
             if (after.hideRecents != settings.hideRecents) add(context.getString(R.string.settings_file_change, context.getString(R.string.hide_recents), onOff(settings.hideRecents), onOff(after.hideRecents)))
-            if (after.protocolLog != settings.protocolLog) add(context.getString(R.string.settings_file_change, context.getString(R.string.protocol_log), onOff(settings.protocolLog), onOff(after.protocolLog)))
         }
         CtrlAlertDialog(
             onDismissRequest = { pending = null },

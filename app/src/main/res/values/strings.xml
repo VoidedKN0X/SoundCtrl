@@ -203,23 +203,6 @@
     <string name="download_interrupted">The download stopped at %1$d %%. What arrived is kept in memory; Resume download fetches only the rest.</string>
     <string name="resume_download">Resume download</string>
 
-    <!-- Protocol log -->
-    <string name="group_troubleshooting">Troubleshooting</string>
-    <string name="protocol_log">Protocol log</string>
-    <string name="protocol_log_sub">Keep the Bluetooth messages SoundCtrl sends and receives, in memory only</string>
-    <string name="protocol_log_open">Open protocol log</string>
-    <string name="protocol_log_footer">The log is only kept while SoundCtrl is open and is never saved or sent anywhere. Share or Copy on the log screen hands it to an app you pick, for example to attach to a bug report. It can contain your device\'s name and serial number.</string>
-    <string name="protocol_log_empty">The log is empty</string>
-    <string name="protocol_log_empty_on">Connect to a device; every message to and from it shows up here.</string>
-    <string name="protocol_log_empty_off">Turn on Protocol log in Settings first, then connect to a device.</string>
-    <string name="protocol_log_note">Newest first. → sent to the device, ← received. Long messages are cut after 48 bytes; the newest %1$d messages are kept.</string>
-    <string name="protocol_log_share">Share</string>
-    <string name="protocol_log_copy">Copy</string>
-    <string name="protocol_log_copied">Protocol log copied</string>
-    <string name="protocol_log_clear">Clear log</string>
-    <string name="protocol_log_clear_body">Every message in the log is removed. Recording carries on while the switch is on.</string>
-    <string name="protocol_log_subject">SoundCtrl protocol log</string>
-
     <!-- Settings export and import -->
     <string name="settings_file_group">Settings file</string>
     <string name="settings_file_footer">Only SoundCtrl\'s settings are in the file: no devices, no Bluetooth addresses and nothing of the app lock. Importing can turn on Hide in screenshots and Hide in recent apps and shorten the lock time, but never turns them off or makes the lock wait longer.</string>

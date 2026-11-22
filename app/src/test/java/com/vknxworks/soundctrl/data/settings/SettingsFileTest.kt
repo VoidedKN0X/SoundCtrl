@@ -20,9 +20,13 @@ class SettingsFileTest {
         assertEquals(LockTimeout.MINUTE_1, SettingsFile.applied(SettingsFileContent(lockTimeout = "MINUTE_1"), current).lockTimeout)
     }
 
+    @Test fun removedProtocolLogKeyIsIgnored() {
+        val f = SettingsFile.parse("""{"format":"soundctrl-settings","version":1,"autoConnect":false,"protocolLog":true}""")
+        assertEquals(false, SettingsFile.applied(f, AppSettings()).autoConnect)
+    }
+
     @Test fun plainSettingsAreTaken() {
-        val after = SettingsFile.applied(SettingsFileContent(autoConnect = false, protocolLog = true), AppSettings())
+        val after = SettingsFile.applied(SettingsFileContent(autoConnect = false), AppSettings())
         assertEquals(false, after.autoConnect)
-        assertEquals(true, after.protocolLog)
     }
 }

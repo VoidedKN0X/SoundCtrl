@@ -37,8 +37,6 @@ data class AppSettings(
     val lockTimeout: LockTimeout = LockTimeout.IMMEDIATELY,
     val hideScreenshots: Boolean = false,
     val hideRecents: Boolean = false,
-    /** Settings > Protocol log: keep the Bluetooth messages in memory so they can be shared by hand. */
-    val protocolLog: Boolean = false,
 )
 
 class SettingsRepository(private val context: Context, scope: CoroutineScope) {
@@ -47,7 +45,8 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val lockTimeout = stringPreferencesKey("lock_timeout")
         val hideScreenshots = booleanPreferencesKey("hide_screenshots")
         val hideRecents = booleanPreferencesKey("hide_recents")
-        val protocolLog = booleanPreferencesKey("protocol_log")
+        /** The removed protocol log's switch; dropped from saved settings on the next save. */
+        val removedProtocolLog = booleanPreferencesKey("protocol_log")
     }
 
     private val prefs: Flow<Preferences> = context.appDataStore.data.catch { e ->
@@ -63,7 +62,6 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         lockTimeout = this[K.lockTimeout]?.let { n -> LockTimeout.entries.firstOrNull { it.name == n } } ?: LockTimeout.IMMEDIATELY,
         hideScreenshots = this[K.hideScreenshots] ?: false,
         hideRecents = this[K.hideRecents] ?: false,
-        protocolLog = this[K.protocolLog] ?: false,
     )
 
     /** Saves a change. If the phone's storage fails, the change is dropped instead of closing the app. */
@@ -75,7 +73,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
                 p[K.lockTimeout] = s.lockTimeout.name
                 p[K.hideScreenshots] = s.hideScreenshots
                 p[K.hideRecents] = s.hideRecents
-                p[K.protocolLog] = s.protocolLog
+                p.remove(K.removedProtocolLog)
             }
         } catch (e: IOException) {
             // Nothing to do: the settings stay as they were.
