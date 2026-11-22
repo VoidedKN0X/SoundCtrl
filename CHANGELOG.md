@@ -4,7 +4,9 @@ What changed in each SoundCtrl release. Every release on the [Releases page](htt
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
-## Unreleased
+## v0.6.0 (2026-11-22)
+
+Built and checked by CI only: nothing in this release had been run on a phone when it was published.
 
 **Not tried on a Tour Pro 3 yet:** every new setting below comes from reading the JBL Headphones app (5.38.2) for this model. Please test them one by one (see the test list in PROTOCOL.md §7.4) and report what the earbuds do.
 
