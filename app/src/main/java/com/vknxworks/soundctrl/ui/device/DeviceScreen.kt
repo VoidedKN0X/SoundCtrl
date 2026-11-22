@@ -18,6 +18,9 @@ import androidx.compose.material.icons.outlined.Equalizer
 import androidx.compose.material.icons.outlined.GraphicEq
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Hearing
+import androidx.compose.material.icons.outlined.HighQuality
+import androidx.compose.material.icons.outlined.Mic
+import androidx.compose.material.icons.outlined.ThreeDRotation
 import androidx.compose.material.icons.outlined.Headphones
 import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material.icons.outlined.Edit
@@ -54,6 +57,8 @@ import com.vknxworks.soundctrl.proto.Control
 import com.vknxworks.soundctrl.proto.HeadphoneP4
 import com.vknxworks.soundctrl.proto.NoiseMode
 import com.vknxworks.soundctrl.proto.Race
+import com.vknxworks.soundctrl.proto.RaceGestures
+import com.vknxworks.soundctrl.proto.RaceTourPro3
 import com.vknxworks.soundctrl.ui.components.ConfirmDialog
 import com.vknxworks.soundctrl.ui.components.CtrlButton
 import com.vknxworks.soundctrl.ui.components.CtrlHeroCard
@@ -174,6 +179,7 @@ private fun DeviceBody(s: DeviceSession, st: DeviceState, onUpdate: () -> Unit, 
                 st.control == Control.HP_AIROHA -> Disabled(stringResource(R.string.noise_control), Icons.Outlined.Hearing)
                 else -> {}
             }
+            if (st.tourPro3) TourPro3Sound(s, st) { act(it) }
             if (st.control == Control.SPEAKER_AA && st.product?.has("eqindoor") == true) {
                 GroupChoice(
                     stringResource(R.string.eq_mode),
@@ -188,7 +194,9 @@ private fun DeviceBody(s: DeviceSession, st: DeviceState, onUpdate: () -> Unit, 
         // ----- Controls (headphones) -----
         if (headphones) {
             Group(stringResource(R.string.group_controls)) {
-                if (st.control == Control.HP_P4 && st.gestures.isNotEmpty()) {
+                if (st.tourPro3) {
+                    TourPro3Gestures(s, st) { act(it) }
+                } else if (st.control == Control.HP_P4 && st.gestures.isNotEmpty()) {
                     st.gestures.toSortedMap().forEach { (feature, action) ->
                         val options = (HeadphoneP4.GESTURE_ACTIONS + action).distinct().map { it to actionLabel(it) }
                         GroupChoice(gestureLabel(feature), options, action, icon = Icons.Outlined.TouchApp) { a -> act { s.setGesture(feature, a) } }
@@ -196,6 +204,7 @@ private fun DeviceBody(s: DeviceSession, st: DeviceState, onUpdate: () -> Unit, 
                 } else {
                     Disabled(stringResource(R.string.gestures), Icons.Outlined.TouchApp)
                 }
+                if (st.tourPro3) TourPro3SmartTalk(s, st) { act(it) }
                 if (st.airohaSettings) {
                     GroupSwitch(stringResource(R.string.in_ear_play_pause), stringResource(R.string.in_ear_play_pause_sub), st.inEarPlayPause == true, Icons.Outlined.PlayCircle) { on ->
                         act { s.setInEarPlayPause(on) }
@@ -263,7 +272,22 @@ private fun DeviceBody(s: DeviceSession, st: DeviceState, onUpdate: () -> Unit, 
                     icon = Icons.Outlined.PowerSettingsNew, fallbackLabel = stringResource(R.string.not_reported)) { m ->
                     act { if (m == 0) s.setAutoOff(false, if (minutes > 0) minutes else 30) else s.setAutoOff(true, m) }
                 }
-                Disabled(stringResource(R.string.voice_prompts), Icons.Outlined.RecordVoiceOver)
+                if (st.tourPro3) {
+                    // The app turns prompts off with 0900 and chooses tones or voice with the language index (PROTOCOL.md §7.4).
+                    val mode = when {
+                        st.vpOn == false -> 0
+                        st.vpLanguage == RaceTourPro3.VP_TONES -> 1
+                        st.vpLanguage != null -> 2
+                        else -> null
+                    }
+                    GroupChoice(
+                        stringResource(R.string.voice_prompts),
+                        listOf(0 to stringResource(R.string.vp_off), 1 to stringResource(R.string.vp_tones), 2 to stringResource(R.string.vp_spoken)),
+                        mode, icon = Icons.Outlined.RecordVoiceOver, fallbackLabel = stringResource(R.string.not_reported),
+                    ) { m -> act { s.setVoicePromptMode(m) } }
+                } else {
+                    Disabled(stringResource(R.string.voice_prompts), Icons.Outlined.RecordVoiceOver)
+                }
             } else if (headphones) {
                 Disabled(stringResource(R.string.auto_off), Icons.Outlined.PowerSettingsNew)
                 Disabled(stringResource(R.string.voice_prompts), Icons.Outlined.RecordVoiceOver)
@@ -310,6 +334,75 @@ private fun DeviceBody(s: DeviceSession, st: DeviceState, onUpdate: () -> Unit, 
             c.devices.forget(s.address)
             onGone()
         }
+    }
+}
+
+/** Tour Pro 3: adaptive ANC, spatial sound, Hi-Res and Voice Aware (PROTOCOL.md §7.4). */
+@Composable
+private fun TourPro3Sound(s: DeviceSession, st: DeviceState, act: (suspend () -> Boolean) -> Unit) {
+    GroupSwitch(stringResource(R.string.adaptive_anc), stringResource(R.string.adaptive_anc_sub), st.adaptiveAnc == true, Icons.Outlined.Hearing) { on ->
+        act { s.setAdaptiveAnc(on) }
+    }
+    GroupChoice(
+        stringResource(R.string.spatial),
+        listOf(
+            RaceTourPro3.SPATIAL_OFF to stringResource(R.string.spatial_off),
+            RaceTourPro3.SPATIAL_FIXED to stringResource(R.string.spatial_fixed),
+            RaceTourPro3.SPATIAL_HEAD_TRACKING to stringResource(R.string.spatial_head_tracking),
+        ),
+        st.spatial, icon = Icons.Outlined.ThreeDRotation, fallbackLabel = stringResource(R.string.not_reported),
+    ) { m -> act { s.setSpatial(m) } }
+    GroupSwitch(stringResource(R.string.hi_res), stringResource(R.string.hi_res_sub), st.hiRes == true, Icons.Outlined.HighQuality) { on ->
+        act { s.setHiRes(on) }
+    }
+    // The app's slider gives 1-3 and keeps the last level (2 to begin with) when switching on or off.
+    val level = st.voiceAwareLevel?.takeIf { it in 1..3 } ?: 2
+    GroupSwitch(stringResource(R.string.voice_aware), stringResource(R.string.voice_aware_sub), st.voiceAware == true, Icons.Outlined.Mic) { on ->
+        act { s.setVoiceAware(on, level) }
+    }
+    if (st.voiceAware == true) {
+        GroupChoice(
+            stringResource(R.string.voice_aware_level),
+            listOf(1 to stringResource(R.string.level_low), 2 to stringResource(R.string.level_medium), 3 to stringResource(R.string.level_high)),
+            st.voiceAwareLevel, icon = Icons.Outlined.Mic, fallbackLabel = stringResource(R.string.not_reported),
+        ) { l -> act { s.setVoiceAware(true, l) } }
+    }
+}
+
+/** Tour Pro 3: one control preset per earbud, as the JBL app's gesture page offers them. */
+@Composable
+private fun TourPro3Gestures(s: DeviceSession, st: DeviceState, act: (suspend () -> Boolean) -> Unit) {
+    if (!st.gesturesComplete) {
+        GroupRow(stringResource(R.string.gestures), stringResource(R.string.gestures_need_both), icon = Icons.Outlined.TouchApp, iconTint = CtrlColors.Muted, titleColor = CtrlColors.Muted)
+        return
+    }
+    val options = listOf(
+        RaceGestures.Preset.AMBIENT to stringResource(R.string.gesture_preset_ambient),
+        RaceGestures.Preset.VOLUME to stringResource(R.string.gesture_preset_volume),
+        RaceGestures.Preset.PLAYBACK to stringResource(R.string.gesture_preset_playback),
+        RaceGestures.Preset.NONE to stringResource(R.string.gesture_preset_none),
+    )
+    for (right in listOf(false, true)) {
+        GroupChoice(
+            stringResource(if (right) R.string.gestures_right else R.string.gestures_left),
+            options, RaceGestures.presetOf(st.airohaGestures, right), icon = Icons.Outlined.TouchApp,
+            fallbackLabel = stringResource(R.string.gesture_preset_custom),
+        ) { p -> act { s.setGesturePreset(right, p) } }
+    }
+}
+
+/** Tour Pro 3: Smart Talk off or on with the app's timeouts. */
+@Composable
+private fun TourPro3SmartTalk(s: DeviceSession, st: DeviceState, act: (suspend () -> Boolean) -> Unit) {
+    val current = st.smartTalk
+    // A timeout the earbuds report that isn't one of the app's choices is still shown as it is.
+    val reported = current?.takeIf { it.first && it.second > 0 }?.second
+    val timeouts = (RaceTourPro3.SMART_TALK_TIMEOUTS + listOfNotNull(reported)).distinct().sorted()
+    val opts = listOf(0 to stringResource(R.string.smart_talk_off)) + timeouts.map { it to stringResource(R.string.seconds, it) }
+    GroupChoice(stringResource(R.string.smart_talk), opts, current?.let { if (it.first) it.second else 0 }, icon = Icons.Outlined.RecordVoiceOver,
+        fallbackLabel = stringResource(R.string.not_reported)) { v ->
+        // Off keeps the last timeout (at least 5 s), as the app does.
+        act { if (v == 0) s.setSmartTalk(false, (current?.second ?: 5).coerceAtLeast(5)) else s.setSmartTalk(true, v) }
     }
 }
 

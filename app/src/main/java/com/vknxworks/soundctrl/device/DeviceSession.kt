@@ -20,6 +20,8 @@ import com.vknxworks.soundctrl.proto.P4Message
 import com.vknxworks.soundctrl.proto.Product
 import com.vknxworks.soundctrl.proto.Race
 import com.vknxworks.soundctrl.proto.RaceAssembler
+import com.vknxworks.soundctrl.proto.RaceGestures
+import com.vknxworks.soundctrl.proto.RaceTourPro3
 import com.vknxworks.soundctrl.proto.SpeakerDfuCommands
 import com.vknxworks.soundctrl.proto.SpeakerInfo
 import com.vknxworks.soundctrl.proto.SpeakerInfoParser
@@ -97,11 +99,32 @@ data class DeviceState(
     /** Airoha: which earbud SoundCtrl asked to ring. */
     val ringingLeft: Boolean = false,
     val ringingRight: Boolean = false,
+    /** Airoha earbuds: the relay destination of the second earbud (from `0D00`), for commands meant for it. */
+    val partnerDst: Pair<Int, Int>? = null,
+    // ----- Tour Pro 3 only (tourPro3) -----
+    /** Voice prompts switched on (`0901 [01 00]`) and the prompt language index (255 = tones). */
+    val vpOn: Boolean? = null,
+    val vpLanguage: Int? = null,
+    /** Voice Aware (hear yourself during calls) and its level (the app uses 1-3). */
+    val voiceAware: Boolean? = null,
+    val voiceAwareLevel: Int? = null,
+    val adaptiveAnc: Boolean? = null,
+    /** Smart Talk on and its timeout in seconds. */
+    val smartTalk: Pair<Boolean, Int>? = null,
+    val hiRes: Boolean? = null,
+    /** Spatial sound: [RaceTourPro3.SPATIAL_OFF], `SPATIAL_FIXED` or `SPATIAL_HEAD_TRACKING`. */
+    val spatial: Int? = null,
+    /** Touch gestures of both earbuds (Harman gesture id → action id), the key id to write, and whether both were read. */
+    val airohaGestures: Map<Int, Int> = emptyMap(),
+    val gestureKeyId: Int = RaceGestures.DEFAULT_KEY_ID,
+    val gesturesComplete: Boolean = false,
 ) {
     /** Battery, case battery and Find my buds are established for this Airoha device. */
     val airohaBasics: Boolean get() = control == Control.HP_AIROHA && airoha?.hasBasics == true && (pid ?: "") !in AirohaFamily.OWN_CONTROL_PIDS
     /** Noise control, auto power-off and auto play/pause are established for this Airoha device. */
     val airohaSettings: Boolean get() = airohaBasics && airoha?.hasMmiSettings == true
+    /** The Tour Pro 3's own settings (gestures, voice prompts, Voice Aware, adaptive ANC, Smart Talk, Hi-Res, spatial sound). */
+    val tourPro3: Boolean get() = airohaSettings && airoha == AirohaFamily.AB158X && RaceTourPro3.isTourPro3(pid)
 }
 
 /**
@@ -491,7 +514,9 @@ class DeviceSession(
             }
             r.first -> true
             else -> {
-                lastRaceFailure = RaceFailure(RaceFailure.Kind.REFUSED, id, status = Race.statusOf(r.second) ?: -1)
+                // A relayed command refused by the other earbud: its own status is in the inner frame.
+                val status = RaceTourPro3.unwrapRelay(r.second)?.let { Race.statusOf(it) } ?: Race.statusOf(r.second)
+                lastRaceFailure = RaceFailure(RaceFailure.Kind.REFUSED, id, status = status ?: -1)
                 false
             }
         }
@@ -520,8 +545,10 @@ class DeviceSession(
         var partner = true
         if (basics) {
             val right = race(Race.getAgentIsRight()) { Race.parseAgentIsRight(it) }
-            partner = race(Race.getAvailableDestinations()) { Race.parsePartnerExists(it) } ?: true
-            _state.update { it.copy(agentRight = right, partnerPresent = partner) }
+            val dstReply = race(Race.getAvailableDestinations()) { b -> b.takeIf { Race.parsePartnerExists(it) != null } }
+            partner = dstReply?.let { Race.parsePartnerExists(it) } ?: true
+            val dst = dstReply?.let { RaceTourPro3.parsePartnerDst(it) }
+            _state.update { it.copy(agentRight = right, partnerPresent = partner, partnerDst = dst) }
         }
         for (role in if (partner) listOf(Race.AGENT, Race.PARTNER) else listOf(Race.AGENT)) {
             race(Race.getFwVersion(role)) { b -> Race.parseFwVersion(b)?.takeIf { it.first == role }?.second }
@@ -533,6 +560,42 @@ class DeviceSession(
             race(Race.getCommonConfig(Race.MODULE_AUTO_POWER_OFF)) { Race.parseAutoOff(it) }?.let { v -> _state.update { it.copy(autoOff = v) } }
             race(Race.getCommonConfig(Race.MODULE_IN_EAR_PLAY_PAUSE)) { Race.parseInEarPlayPause(it) }?.let { v -> _state.update { it.copy(inEarPlayPause = v) } }
         }
+        if (_state.value.tourPro3) refreshTourPro3()
+    }
+
+    /** The Tour Pro 3's own settings, each read as the JBL app reads it (PROTOCOL.md §7.4). */
+    private suspend fun refreshTourPro3() {
+        val t = 2500L
+        race(RaceTourPro3.getVpOnOff(), t) { RaceTourPro3.parseVpOnOff(it) }?.let { v -> _state.update { it.copy(vpOn = v) } }
+        race(RaceTourPro3.getVpLanguage(), t) { RaceTourPro3.parseVpLanguage(it) }?.let { v -> _state.update { it.copy(vpLanguage = v) } }
+        race(RaceTourPro3.getSidetoneState(), t) { RaceTourPro3.parseSidetoneState(it) }?.let { v -> _state.update { it.copy(voiceAware = v) } }
+        race(RaceTourPro3.getSidetoneLevel(), t) { RaceTourPro3.parseSidetoneLevel(it) }?.let { v -> _state.update { it.copy(voiceAwareLevel = v) } }
+        race(RaceTourPro3.getAdaptiveAnc(), t) { RaceTourPro3.parseAdaptiveAnc(it) }?.let { v -> _state.update { it.copy(adaptiveAnc = v) } }
+        race(RaceTourPro3.getSmartTalk(), t) { RaceTourPro3.parseSmartTalk(it) }?.let { v -> _state.update { it.copy(smartTalk = v) } }
+        race(RaceTourPro3.getHiRes(), t) { RaceTourPro3.parseHiRes(it) }?.let { v -> _state.update { it.copy(hiRes = v) } }
+        race(RaceTourPro3.getSpatial(), t) { RaceTourPro3.parseSpatial(it) }?.let { v -> _state.update { it.copy(spatial = v) } }
+        refreshGestures()
+    }
+
+    /**
+     * Both earbuds' key maps: the one SoundCtrl talks to directly, the other through the relay, as the app does
+     * (`MmiStage_GetGesture_1568_v3`, plain and relayed). Without the agent's side or the second earbud they can't be
+     * changed, because the app always writes both.
+     */
+    private suspend fun refreshGestures() {
+        val s = _state.value
+        val right = s.agentRight ?: return
+        val agent = race(RaceGestures.read(), 2500) { Race.parseNvData(it) }?.let { RaceGestures.parse(it, right) } ?: return
+        val dst = s.partnerDst
+        val other = if (s.partnerPresent == true && dst != null) {
+            race(RaceTourPro3.relay(dst, RaceGestures.read()), 3000) { b -> RaceTourPro3.unwrapRelay(b)?.let { Race.parseNvData(it) } }
+                ?.let { RaceGestures.parse(it, !right) }
+        } else {
+            null
+        }
+        // The app keeps the key id of the last entry it parsed (the second earbud's, read last).
+        val keyId = other?.keyId ?: agent.keyId ?: RaceGestures.DEFAULT_KEY_ID
+        _state.update { it.copy(airohaGestures = agent.gestures + (other?.gestures ?: emptyMap()), gestureKeyId = keyId, gesturesComplete = other != null) }
     }
 
     /** Each earbud's battery and charging state, then the case. Agent/partner become left/right by the agent's side. */
@@ -605,6 +668,101 @@ class DeviceSession(
     suspend fun findBud(target: Int, ring: Boolean): Boolean {
         val ok = _state.value.airohaBasics && raceSet(Race.findMe(target, ring), Race.FIND_ME) { Race.parseFindMe(it) }
         if (ok) _state.update { if (target == Race.FIND_LEFT) it.copy(ringingLeft = ring) else it.copy(ringingRight = ring) }
+        return ok
+    }
+
+    // ---------- Tour Pro 3 ----------
+
+    /** Relayed command for the second earbud: its `5B 0D01` ack must be 0, then the inner answer decides. */
+    private fun relayed(innerId: Int): (ByteArray) -> Boolean? = { b ->
+        val ack = RaceTourPro3.relayAckStatus(b)
+        if (ack != null) {
+            if (ack != 0) false else null
+        } else {
+            RaceTourPro3.unwrapRelay(b)?.let { RaceTourPro3.parseStatus(it, innerId) }
+        }
+    }
+
+    /**
+     * Gives one earbud a preset (tap, double tap, triple tap, tap and hold), the way the app writes gestures on
+     * AB158x earbuds: both key maps on the earbud the phone talks to, reload, then the same through the relay on
+     * the other earbud. Needs both earbuds' key maps read first ([DeviceState.gesturesComplete]).
+     */
+    suspend fun setGesturePreset(right: Boolean, preset: RaceGestures.Preset): Boolean {
+        val s = _state.value
+        val agentRight = s.agentRight
+        val dst = s.partnerDst
+        if (!s.tourPro3 || !s.gesturesComplete || agentRight == null || dst == null) return false
+        val ids = if (right) RaceGestures.RIGHT_IDS else RaceGestures.LEFT_IDS
+        val updated = s.airohaGestures.toMutableMap()
+        ids.take(4).forEachIndexed { i, id -> updated[id] = preset.actions[i] }
+        val agentMap = RaceGestures.keyMap(updated, agentRight, s.gestureKeyId)
+        val partnerMap = RaceGestures.keyMap(updated, !agentRight, s.gestureKeyId)
+        val write = RaceTourPro3.NVKEY_WRITE
+        val reload = RaceTourPro3.RELOAD_NVKEY
+        val relay = RaceTourPro3.RELAY_PASS_TO_DST
+        val ok = raceSet(RaceGestures.write(RaceGestures.NV_KEY_MAP, agentMap), write) { RaceTourPro3.parseStatus(it, write) } &&
+            raceSet(RaceGestures.write(RaceGestures.NV_PEER_KEY_MAP, partnerMap), write) { RaceTourPro3.parseStatus(it, write) } &&
+            raceSet(RaceGestures.reload(), reload) { RaceTourPro3.parseStatus(it, reload) } &&
+            raceSet(RaceTourPro3.relay(dst, RaceGestures.write(RaceGestures.NV_KEY_MAP, partnerMap)), relay, accept = relayed(write)) &&
+            raceSet(RaceTourPro3.relay(dst, RaceGestures.write(RaceGestures.NV_PEER_KEY_MAP, agentMap)), relay, accept = relayed(write)) &&
+            raceSet(RaceTourPro3.relay(dst, RaceGestures.reload()), relay, accept = relayed(reload))
+        if (ok) _state.update { it.copy(airohaGestures = updated) }
+        return ok
+    }
+
+    /** Voice prompts: 0 off, 1 tones, 2 spoken. Turning them on again is the language index alone, as in the app. */
+    suspend fun setVoicePromptMode(mode: Int): Boolean {
+        if (!_state.value.tourPro3) return false
+        val ok = if (mode == 0) {
+            raceSet(RaceTourPro3.setVpOff(), RaceTourPro3.HOSTAUDIO_MMI_SET) { RaceTourPro3.parseSetVpOff(it) }
+        } else {
+            val index = if (mode == 1) RaceTourPro3.VP_TONES else RaceTourPro3.VP_SPOKEN
+            raceSet(RaceTourPro3.setVpLanguage(index), Race.SET_MMI_COMMON_CONFIG) { Race.parseSetCommonConfig(it, RaceTourPro3.MODULE_VP_LANGUAGE) }
+        }
+        if (ok) {
+            if (mode == 0) _state.update { it.copy(vpOn = false) } else _state.update { it.copy(vpLanguage = if (mode == 1) RaceTourPro3.VP_TONES else RaceTourPro3.VP_SPOKEN) }
+            // Show what the earbuds report now (whether the language index alone turned prompts on again).
+            race(RaceTourPro3.getVpOnOff(), 2500) { RaceTourPro3.parseVpOnOff(it) }?.let { v -> _state.update { it.copy(vpOn = v) } }
+        }
+        return ok
+    }
+
+    /** Voice Aware on/off and level: the app always sends the state, then the level (`setVoiceAwareStatus`). */
+    suspend fun setVoiceAware(on: Boolean, level: Int): Boolean {
+        if (!_state.value.tourPro3) return false
+        val m = Race.SET_MMI_COMMON_CONFIG
+        val ok = raceSet(RaceTourPro3.setSidetoneState(on), m) { Race.parseSetCommonConfig(it, RaceTourPro3.MODULE_SIDETONE_STATE) } &&
+            raceSet(RaceTourPro3.setSidetoneLevel(level), m) { Race.parseSetCommonConfig(it, RaceTourPro3.MODULE_SIDETONE_LEVEL) }
+        if (ok) _state.update { it.copy(voiceAware = on, voiceAwareLevel = level) }
+        return ok
+    }
+
+    suspend fun setAdaptiveAnc(on: Boolean): Boolean {
+        val ok = _state.value.tourPro3 &&
+            raceSet(RaceTourPro3.setAdaptiveAnc(on), RaceTourPro3.ANC_GAIN_CONTROL) { RaceTourPro3.parseSetAdaptiveAnc(it) }
+        if (ok) _state.update { it.copy(adaptiveAnc = on) }
+        return ok
+    }
+
+    suspend fun setSmartTalk(on: Boolean, timeout: Int): Boolean {
+        val id = RaceTourPro3.SMART_TALK_SET
+        val ok = _state.value.tourPro3 && raceSet(RaceTourPro3.setSmartTalk(on, timeout), id) { RaceTourPro3.parseStatus(it, id) }
+        if (ok) _state.update { it.copy(smartTalk = on to timeout) }
+        return ok
+    }
+
+    suspend fun setHiRes(on: Boolean): Boolean {
+        val id = RaceTourPro3.HI_RES_SET
+        val ok = _state.value.tourPro3 && raceSet(RaceTourPro3.setHiRes(on), id) { RaceTourPro3.parseStatus(it, id, minSize = 8) }
+        if (ok) _state.update { it.copy(hiRes = on) }
+        return ok
+    }
+
+    suspend fun setSpatial(mode: Int): Boolean {
+        val id = RaceTourPro3.SEND_HM_CMD
+        val ok = _state.value.tourPro3 && raceSet(RaceTourPro3.setSpatial(mode), id) { RaceTourPro3.parseStatus(it, id) }
+        if (ok) _state.update { it.copy(spatial = mode) }
         return ok
     }
 

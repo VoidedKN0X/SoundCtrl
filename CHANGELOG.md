@@ -4,6 +4,29 @@ What changed in each SoundCtrl release. Every release on the [Releases page](htt
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+**Not tried on a Tour Pro 3 yet:** every new setting below comes from reading the JBL Headphones app (5.38.2) for this model. Please test them one by one (see the test list in PROTOCOL.md §7.4) and report what the earbuds do.
+
+### New (JBL Tour Pro 3 only)
+
+These appear only for the Tour Pro 3 (product id 20f2, and 20fd for its case) with the AB158x chip SoundCtrl reads from the earbuds. Other Airoha models (Live Buds 3, Tune 770NC, …) don't get them, because the JBL app may use other commands or tables for those. Each one is read from the earbuds when you open the device or tap **Refresh**, so the device page shows the earbuds' current setting; a change that the earbuds don't accept shows the reason line (no answer, refused with status, or unexpected answer), the same way as the other Airoha settings since 0.5.1.
+
+- **Touch controls per earbud:** for each earbud you pick one of the four controls the JBL app offers for the Tour Pro 3: **Ambient sound** (tap: noise cancelling/Ambient Aware, double tap: TalkThru, hold: voice assistant), **Volume** (tap: louder, double tap: softer, hold: voice assistant), **Playback** (tap: play/pause, double tap: next, triple tap: previous, hold: voice assistant) or **None**. If the earbuds hold something else, the row says **Custom**. SoundCtrl writes the controls the way the JBL app does: both earbuds' key maps on the earbud your phone talks to, then the same on the other earbud through it. That's why this needs both earbuds connected and read first; otherwise the row asks you to put both in and tap Refresh.
+- **Voice prompts:** Off, Tones only or Spoken. "Off" switches the prompts off; "Tones only" and "Spoken" set the prompt type. Note: the JBL app never sends an explicit "prompts on" command, it only sets the type, so after choosing Tones or Spoken SoundCtrl reads the on/off state back and shows what the earbuds report. "Spoken" uses the first language stored on the earbuds; changing the prompt language (which downloads a language file in the JBL app) isn't offered.
+- **Adaptive noise cancelling** on/off.
+- **Spatial sound:** Off, Fixed or Head tracking.
+- **Hi-Res audio (LDAC)** on/off.
+- **Voice Aware** (hear your own voice during calls) on/off, with Low, Medium or High.
+- **Smart Talk:** Off, or on with 5, 15 or 20 seconds.
+- All new texts in English, Dutch, French and German.
+
+### Not included (still "Needs confirming" or not offered)
+
+- **EQ presets and custom EQ** stay switched off: the JBL app sends EQ to these earbuds as a full band curve through Airoha's PEQ functions, calculated from its own EQ model, and that wasn't pinned down byte for byte.
+- **Noise-cancelling and Ambient Aware levels**, auto compensation, ear-tip fit test and "check my best fit" (they need sound measurements), smart audio and video / low-latency mode (it uses a per-model bitrate table and makes the earbuds reconnect), the smart case's own settings (screen, wallpapers, notifications, Auracast from the case), Silent Now, left/right balance, volume limiter, PersoniFi, rename and multipoint: not in this version. The Tour Pro 3 page in the JBL app has no rename or multipoint setting.
+- **Firmware writing** stays check-only for Airoha earbuds.
+
 ## v0.5.2 (2026-11-22)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published.

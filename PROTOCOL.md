@@ -160,14 +160,15 @@ The product list's `platform` and `otaConfig.protocolType` decide [V] (`ControlF
 | Scan, connect, remember | yes [V] | yes [V] | yes [V] | yes [V] | yes (RACE pipe) [V] |
 | Model, firmware | yes [V] | yes [V] | yes [V] | yes [V] | firmware [V] |
 | Battery (main / L / R / case) | yes [V] | yes [V] | yes [V] | yes [V] | L / R / case with charging [V] (not AB1562, not Quantum 910) |
-| EQ presets, custom EQ | Indoor/Outdoor (BoomBox) [V]; rest needs confirming | needs confirming | needs confirming | needs confirming | needs confirming |
+| EQ presets, custom EQ | Indoor/Outdoor (BoomBox) [V]; rest needs confirming | needs confirming | needs confirming | needs confirming | needs confirming (Tour Pro 3 too, §7.5) |
 | ANC / Ambient / TalkThru | — | — | yes [V] | ANC only [V] | off / ANC / Ambient Aware / TalkThru on AB1568 and AB158x chips [V]; levels and Adaptive ANC need confirming |
-| Gestures | — | — | yes, for the gestures the device reports [V] | needs confirming | needs confirming |
+| Gestures | — | — | yes, for the gestures the device reports [V] | needs confirming | Tour Pro 3: one of the app's four controls per earbud [V] (§7.4); others needs confirming |
 | Auto-off | — | — | yes [V] (unit I) | needs confirming | 30 / 60 / 120 min or never, AB1568 and AB158x [V] |
-| Voice prompts / feedback tones | yes [V] | yes [V] | yes [V] | needs confirming | needs confirming |
+| Voice prompts / feedback tones | yes [V] | yes [V] | yes [V] | needs confirming | Tour Pro 3: off / tones / spoken [V] (§7.4); others needs confirming |
 | Rename | yes [V] | yes [V] | needs confirming | needs confirming | needs confirming |
 | In-ear auto play/pause | — | — | — | — | AB1568 and AB158x [V] |
 | Find my buds (ring left / right) | — | — | — | — | yes [V] (not AB1562, not Quantum 910) |
+| Adaptive ANC, spatial sound, Hi-Res (LDAC), Voice Aware, Smart Talk | — | — | — | — | Tour Pro 3 only [V] (§7.4) |
 | Transport | BLE | BLE | BLE | BLE | classic RFCOMM first (Tour Pro 3: confirmed in use by the JBL app), BLE RACE as fallback |
 | PartyBoost | yes [V] | — | — | — | — |
 | Auracast on/off | yes [V] | yes [V] | — | — | — |
@@ -192,7 +193,7 @@ Source: `com.harman.cmdctrl.imp.control.u3.lea.TourPro3LeControl` → `LeaAhBase
 
 ### 7.2 Frames
 
-`05 type len(LE16) raceId(LE16) payload`, len = 2 + payload [V] (`RacePacket.getRaw`). Types: `5A` command wanting a reply, `5B` reply (status in [6] unless noted), `5C` command without reply, `5D` indication (a later answer or a push) [V]. Commands that are for one earbud carry a role byte (0 = the earbud the phone talks to, "agent"; 1 = the other one, "partner"); the agent relays them [V]. The SDK can also wrap a whole frame in `RELAY_PASS_TO_DST` (`0D01`, payload `dstType dstId frame`; reply's inner frame from [8]) [V] (`RaceCmdRelayPass`, `RelayRespExtracter`); none of the features SoundCtrl uses need it.
+`05 type len(LE16) raceId(LE16) payload`, len = 2 + payload [V] (`RacePacket.getRaw`). Types: `5A` command wanting a reply, `5B` reply (status in [6] unless noted), `5C` command without reply, `5D` indication (a later answer or a push) [V]. Commands that are for one earbud carry a role byte (0 = the earbud the phone talks to, "agent"; 1 = the other one, "partner"); the agent relays them [V]. The SDK can also wrap a whole frame in `RELAY_PASS_TO_DST` (`0D01`, payload `dstType dstId frame`; reply's inner frame from [8]) [V] (`RaceCmdRelayPass`, `RelayRespExtracter`); the destination is the first (type, id) pair with type 5 in the `0D00` reply (`MmiStageGetAvaDst`). SoundCtrl uses it only for the Tour Pro 3's gestures (§7.4).
 
 | Function | Command | Reply | |
 | --- | --- | --- | --- |
@@ -233,11 +234,60 @@ Values [V]:
 - Worked: noise control (status and changes), auto power-off, auto play/pause, find my buds, over the RFCOMM link with status pushes on (`0006 [01]`).
 - Wrong: Ambient Aware and TalkThru were swapped (see §7.2 "Which pass-through filter is which"); fixed per product.
 
-### 7.4 Not implemented for Airoha (needs confirming)
+### 7.4 Tour Pro 3 settings (SoundCtrl 0.6)
 
-- **Gestures**: per-chip stages (`MmiStage_Get/SetGesture_1568_v3`, `…_1568`, `MmiStage_GetHeadsetGesture`) that read and write key-map NV keys and reload them on both earbuds; the per-model action tables weren't pinned.
-- **Voice prompts**: on these models the setting is a voice-prompt language (`SetVpLanguageIndex`, 255 = tones) plus an off switch (`SetVpOnoff 0`); how "on" is restored after "off" isn't clear from the code.
-- **EQ** (presets / custom): Airoha PEQ (`AirohaEQControl`, `RACE_HOSTAUDIO_PEQ…`) plus Harman EQ relayed in `RACE_SEND_HM_CMD` (`0093`); not pinned.
-- **Spatial sound, Hi-Res/LDAC, low latency (smart audio/video), Adaptive ANC levels, smart case settings, rename**: separate stages or Harman commands relayed in `0093`; not examined in enough detail.
+Source: `TourPro3LeControl` (what it calls on `AhDevice` `gi.a`), `AirohaDeviceStatusControl.execFlow`, the stages named below, the Tour Pro 3's UI config `assets/config/dash4/jbl_tour_pro_3.json` and its dashboard cards. Offered only when the product id is `20f2`/`20fd` **and** the chip family is AB158x (`DeviceState.tourPro3`, `RaceTourPro3.isTourPro3`): several of these paths are chosen per model inside the app (`mModelName` "20F2" checks) or per chip type, so other Airoha models don't get them. Bytes and reply layouts are unit-tested in `RaceTourPro3Test`. **None of this has been tried on a real device yet.**
+
+| Function | Command | Reply | |
+| --- | --- | --- | --- |
+| Voice prompts on? | `5A 0901 [01 00]` | `5B 0901 [01 00][status][on]` | [V] `MmiStage_GetVpOnOff` (flow GET_MULTILANG_VOICE_PROMPT_ONOFF, only for 20D4/20D5/20D8/20D9/20F1/20F2) |
+| Voice prompts off | `5A 0900 [01 00 00]` | `5B 0900 [01 00][status]` | [V] `MmiStage_SetVpOnoff(0)` for VoiceType NONE |
+| Prompt language index | `5A 2C83 [09 00]` | `5B 2C83 [status][09 00][index]`, 255 = tones | [V] `MmiStageGetVpLangIndex` |
+| Tones / spoken | `5A 2C82 [09 00 FF]` / `5A 2C82 [09 00 00]` | `5B 2C82 [status][09 00]` | [V] `MmiStage_SetVpLanguageIndex` (TONE → 255, otherwise 0, when no language file is given) |
+| Voice Aware on? / level | `5A 2C83 [07 00]` / `5A 2C83 [06 00]` | `[status][07 00][on]` / `[status][06 00][level LE16]` | [V] `MmiStageGetSidetoneState`, `MmiStageGetSidetoneLevel` |
+| Voice Aware set | `5A 2C82 [07 00 on]`, then `5A 2C82 [06 00 level LE16]` | `5B 2C82 [status][module]` each | [V] `AB1568DeviceControl.doSetVoiceAware` (state, then level) |
+| Adaptive ANC on? | `5A 0E17 [03 02]` | `5B 0E17 [status][03][on]` | [V] `AncStageGetEnvironmentDetectionStatus` |
+| Adaptive ANC set | `5A 0E17 [03 on]` | `5B 0E17 [status][03]…` | [V] `AncStageSetEnvironmentDetectionStatus` (SET_ADVANCE_ANC_1; with the other fields -1, as the card sends them, SET_ADVANCE_ANC_2 sends nothing) |
+| Smart Talk read | `5A 0060` | `5B 0060 [status][on][timeout]` | [V] `MmiStage_SmartTalkStatus_Get` |
+| Smart Talk set | `5A 0061 [on timeout]` | `5B 0061 [status]` | [V] `MmiStage_SmartTalkStatus_Set`; the card offers 5, 15, 20 s and never less than 5 (`SpeakToChatCard`) |
+| Hi-Res (LDAC) read | `5A 0075` | `5B 0075 [status][type]`, 1 = on | [V] `MmiStage_GetHiResAudioType`, `HiResAudioCard` |
+| Hi-Res set | `5A 0076 [0/1]` | `5B 0076 [status]…` (at least 8 bytes) | [V] `MmiStage_SetHiResAudioType` |
+| Spatial sound read | `5A 0093 [AA 06 03 00 01 00 2E]` | Harman answer `AA 06 len 02 [00 2E 02 on type]` after the status | [V] for the command (`TourPro3LeControl.getDeviceListInfo` → `GenDeviceInfoCmd.toBytesReq` → `Command3.get(6)` → `MmiStage_SendHmCmd`); [I] where the answer sits (SoundCtrl accepts it in the `5B 0093` after the status or in a `5D 0093`) |
+| Spatial sound set | `5A 0093 [AA 06 06 00 00 00 2E 02 on type]` | `5B 0093 [status]` | [V] `GenDeviceInfoCmd.toBytesSet` (feature 46 = `0x2E`), `Command3.set(6)` |
+| Key map read | `5A 0A00 [D6 F2][64 00]` | `5B 0A00 [len LE16][entries]` | [V] `MmiStage_GetGesture_1568_v3` |
+| Key map write | `5A 0A01 [key LE16][entries]` | `5B 0A01 [status]` | [V] `MmiStage_SetGesture_1568_v3` (key `F2D6`), `MmiStage_SetPeerGesture_1568_v3` (key `F2EF`) |
+| Key map reload | `5A 0A09 [D6 F2]` | `5B 0A09 [status]` | [V] `MmiStage_ReloadGestureNv_1568_v3` |
+| Relay to the other earbud | `5A 0D01 [dstType dstId][frame]` | `5B 0D01 [status]` ack, then `5D 0D01 [dstType dstId][inner frame]` | [V] `RaceCmdRelayPass`, `RelayRespExtracter` |
+
+Values and mappings:
+
+- **Voice prompts.** Off = `0900 [01 00 00]`. Tones = language index 255, Spoken = index 0. **How "on" is restored:** the app never sends `0900 [01 00 01]`; choosing tones or a voice after "off" sends only the language index [V]. Whether the earbuds switch prompts back on from that alone isn't known [I]; SoundCtrl reads `0901` again after the change and shows what the earbuds report. Index 0 is the first stored language [I]; a new language file (ROFS update, `startRofsUpdate`) isn't offered.
+- **Voice Aware level:** the card's slider gives 1, 2, 3 (default 2) and passes it unchanged [V]. SoundCtrl labels them Low / Medium / High [I: label order]. The app uses this branch only when `isSupportVoiceAwareOnOff` holds (its default is true; the other branch would fail on Airoha) [I].
+- **Spatial sound:** the card sends off = (on 0), Fixed = (on 1, type 1), Head tracking = (on 1, type 2) [V for the values]; which button text is which comes from the order in `card_spatial_sound_with_head_tracking.xml` (off, fixed, head_tracking) [I: code reading, confirm on device]. For "off" SoundCtrl sends type 0 [I: the card's info object starts with type 0].
+- **Gestures.** Harman gesture ids: left 1 tap, 3 double tap, 7 triple tap, 49 tap and hold, 5 second long press; right = left + 1 (`xp.j`). Agent/partner → left/right by the agent's side (gesture id even = right). Key types: 1 short click, 2 double, 3 triple, 4 long press 1 (= tap and hold), 5 long press 2, 0 release, 9 press. Entry = `keyType keyId event(LE16) state(4 bytes)`; the app writes state 0 and the key id of the last entry it read (default `0x7E`). Events per action (`getGeneralKeyStruct`): 1 vol+ `000A`, 2 vol- `000B`, 3 Ambient `F025`, 4 TalkThru `0090`, 5 next `005A`, 6 previous `005B`, 7 ANC `0091`, 8 play/pause `0053`+`0055`, 9 ANC/Ambient/off `F029`, 10 play/pause (dismiss assistant) `0057`+`0059`, 11 ANC/Ambient `F026`, 12 ANC/off `F027`, 13 Ambient/off `F028`, 14 `F006`, 161 voice assistant `0020` plus short-click `0023` and long-press-1 `0023`. An earbud with no entries gets one empty entry `00 7E 0000 00000000`. Reading reverses this (`parseKeyStruct`, later rules win, 0 when nothing matches) [V].
+- **Gesture write sequence** (`execFlow` SET_GESTURE_STATUS, AB158x earbuds): agent `F2D6` = agent side, agent `F2EF` = partner side, reload `F2D6`; then the same three through the relay with the sides swapped [V]. The app merges the new list with what it read before, so SoundCtrl needs both earbuds read and the agent's side known before it writes [V]. Entry order inside a key map: SoundCtrl writes tap, double, triple, hold, second long press; the app's order depends on its map iteration and may differ [I].
+- **Tour Pro 3 controls** (`jbl_tour_pro_3.json` gestureConfig, same for both earbuds): Ambient sound = tap 11 (ANC/Ambient), double 4 (TalkThru), triple 0, hold 161; Volume = 1, 2, 0, 161; Playback = 8, 5, 6, 161; None = 0, 0, 0, 0 [V]. The app can also put another ambient cycle (9, 12, 13) on the tap (`singleTapNumber`); SoundCtrl shows that as "Ambient sound" too but always writes 11 [I: SoundCtrl's choice]. **The action numbers 3/4 (Ambient/TalkThru) and the cycle numbers are code readings, like the noise-control filters that turned out swapped (§7.2): confirm on the device what each tap really does.**
+
+Test list for the owner's Tour Pro 3 (one at a time, Refresh after each, note the reason line if a change "isn't accepted"):
+
+1. Open the device: do all new rows show a value (not "Not reported")? Which ones don't?
+2. Adaptive noise cancelling on, then off (with noise cancelling active): does it change, and does Refresh show the new state?
+3. Spatial sound: Off, Fixed, Head tracking. **Check that "Fixed" and "Head tracking" aren't swapped** (head tracking should follow your head turning).
+4. Hi-Res (LDAC) on/off (with a phone that supports LDAC): does the codec change in Android's developer options?
+5. Voice Aware on/off and Low/Medium/High during a call: is your own voice louder at High than at Low? **If Low and High feel the wrong way round, the 1-3 order is swapped.**
+6. Smart Talk 5 s, 15 s, 20 s, Off: does talking pause the music, and for about that long?
+7. Voice prompts: Off, then Tones only, then Spoken. **After Off, does choosing Tones or Spoken make the earbuds play prompts again?** (the app never sends an explicit "on") What does the row show after each choice?
+8. Touch controls, left earbud: Volume, then try tap / double tap / hold. Then Playback (tap, double, triple), Ambient sound (tap, double), None. Same for the right earbud. **Check that tap on Ambient sound switches noise cancelling ↔ Ambient Aware and double tap gives TalkThru, and that the left setting changes the left earbud (not the right).**
+9. After a touch-control change, close SoundCtrl, open the JBL app: does it show the same controls? (Then close the JBL app again before reopening SoundCtrl.)
+10. Take one earbud out of range or put it in the case: the touch-controls row should ask for both earbuds; the other settings should still work.
+
+### 7.5 Not implemented for Airoha (needs confirming)
+
+- **EQ** (presets / custom), Tour Pro 3 included: `TourPro3LeControl.setEQSettings2` → `AirohaEQControl` → `AirohaPEQControl.setEQSetting` sends a full band curve (from the app's EQ model, category + 1 as the PEQ index) through the Airoha PEQ stages; reading goes through `getRunningEQSetting`. Not pinned byte for byte.
+- **ANC and Ambient Aware levels** (`MmiStage_SetAncAaLevel`, only while ANC or Ambient is the active filter), auto compensation (`setFullAdaptiveAncStatus`), ear-canal / leakage compensation: value ranges not pinned.
+- **Smart audio & video / low latency** (`MmiStage_SmartSwitchStatus_Set_param`, RACE `1101` sub `A8`: AAC and SBC bitrates and two latencies from a per-model table `jbl.stc.com.data.f0`; the earbuds reconnect afterwards): not pinned.
+- **Smart case settings** (display, screen savers, notifications, case Auracast, `ChargingCaseFeatureCmd` and others relayed in `0093`): skipped, and the case's own connection isn't used.
+- **Ear-tip fit test / check my best fit** (`earCanalTesting`, environment noise checking): needs audio analysis files from the app; skipped.
+- **Rename and multipoint:** the Tour Pro 3 page in the app has neither card.
+- **Other Airoha models:** gestures (`…_1568`, `MmiStage_GetHeadsetGesture` for headsets), voice prompts and the rest above may use other stages or tables; not offered.
 - **Firmware writing**: unchanged, see §5.3.
-

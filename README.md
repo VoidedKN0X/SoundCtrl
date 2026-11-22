@@ -8,7 +8,7 @@ SoundCtrl finds your JBL devices over Bluetooth, shows their battery and firmwar
 
 Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 
-> **Status: early.** SoundCtrl was built from how the official JBL apps talk to the devices, but it has **not been tested on a real JBL device yet** (Tested on: none yet). Firmware writing in particular is untested. Please report what works and what doesn't on your model.
+> **Status: early.** SoundCtrl was built from how the official JBL apps talk to the devices, and has only been tried on one real device so far (Tested on: JBL Tour Pro 3, for connecting and reconnecting, battery, firmware version, noise control, auto power-off, auto play/pause and find my buds). Everything else, including the newer Tour Pro 3 settings and firmware writing, is untested. Please report what works and what doesn't on your model.
 
 <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/VoidedKN0X/SoundCtrl"><img src=".github/assets/badge_obtainium.png" alt="Get it on Obtainium" height="80"></a>
 
@@ -18,6 +18,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Battery:** the speaker's level, or left and right earbud and the case where the device reports them, with a charging mark.
 - **Headphones and earbuds (2024-2025 models, "protocol 4"):** noise control (off, noise cancelling, Ambient Aware, TalkThru), touch gestures for each tap and swipe the device reports, auto power-off and voice prompts.
 - **Airoha earbuds and headphones (Tour Pro 3, Live Buds 3, Tune 770NC, Live Free 2, …):** connected over classic Bluetooth like the JBL app does. Battery of each earbud and the case with a charging mark, noise control (off, noise cancelling, Ambient Aware, TalkThru), auto power-off, auto play/pause when you take an earbud out, and ringing a lost earbud. Which of these show depends on the chip inside; the rest stays **Needs confirming**.
+- **JBL Tour Pro 3, extra:** touch controls per earbud (Ambient sound, Volume, Playback or None, as in the JBL app), voice prompts (off, tones or spoken), adaptive noise cancelling, spatial sound (off, fixed, head tracking), Hi-Res audio (LDAC), Voice Aware with its level, and Smart Talk. Read from the earbuds and not tested on a real Tour Pro 3 yet. EQ stays **Needs confirming**.
 - **Older headphones:** battery, firmware and noise cancelling on/off.
 - **Speakers:** rename, feedback tones, PartyBoost, Auracast on/off, stereo channel (left, right or both), Find (plays a sound), and Indoor/Outdoor sound on the BoomBox.
 - **Firmware update:** **Check for update** asks Harman's public file server for your model; the download is checked against its MD5. You can also install a file you have, if you give its MD5 and version. Only newer firmware is installed, on a charged (50 % or more) and idle device, with progress, Stop and continuing where it stopped. A download that breaks off is retried by itself and can be resumed: only the missing part is fetched again.
@@ -39,7 +40,7 @@ SoundCtrl knows every model in the JBL apps' own lists (about 160). What it can 
 | Newer speakers (GO 5, Xtreme 5, Grip, BoomBox 4, Pulse 6, Clip 6, Charge/Flip Essential 3 SE) | Rename, feedback tones, Auracast | Check and install (untested) |
 | Older speakers (Charge 3/4, Flip 4, Pulse 3, Xtreme 2, BoomBox 1, Flip 3, Xtreme) | As above where the protocol matches | Check only: "Update from this app isn't available for this model yet" |
 | 2024-2025 headphones and earbuds (Tour One M3/M4, Tour Pro 4, Live 680NC/780NC, Live Buds/Beam/Flex 4, Tune 530BT, Tune/Wave/Vibe 3, Endurance, …) | Noise control, gestures, auto-off, voice prompts | Check and install (untested) |
-| Airoha earbuds and headphones (Tour Pro 3, Live Buds 3, Tune 770NC, Live Free 2, Reflect Aero, …) | Depends on the chip SoundCtrl reads from the device. AB1568/AB158x chips (the Tour Pro 3's family): battery (left, right, case), noise control, auto power-off, auto play/pause, find my buds. AB155x chips: battery and find my buds. AB1562 chips and the Quantum 910 family: firmware only. All untested | Check only: not available yet |
+| Airoha earbuds and headphones (Tour Pro 3, Live Buds 3, Tune 770NC, Live Free 2, Reflect Aero, …) | Depends on the chip SoundCtrl reads from the device. AB1568/AB158x chips (the Tour Pro 3's family): battery (left, right, case), noise control, auto power-off, auto play/pause, find my buds. Tour Pro 3 also: touch controls, voice prompts, adaptive noise cancelling, spatial sound, Hi-Res (LDAC), Voice Aware, Smart Talk (untested); EQ needs confirming. AB155x chips: battery and find my buds. AB1562 chips and the Quantum 910 family: firmware only. Only the Tour Pro 3's basics were confirmed on a real device; the rest is untested | Check only: not available yet |
 | Other BES and Realtek headphones and earbuds | Battery, firmware; ANC on/off on some | Check only: not available yet |
 | Everest / Reflect Aware (Avnera) | Not available | Not available |
 
