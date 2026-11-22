@@ -31,10 +31,12 @@
     <!-- Device -->
     <string name="connecting">Connexion…</string>
     <string name="connect_failed">Connexion impossible</string>
-    <string name="connect_failed_body">Vérifiez que l\'appareil est allumé, à proximité et pas connecté à l\'application JBL sur un autre téléphone, puis réessayez.</string>
+    <string name="connect_failed_body">Vérifiez que l\'appareil est allumé, à proximité et pas connecté à l\'application JBL sur un autre téléphone. SoundCtrl se connecte de lui-même dès que votre téléphone se connecte à l\'appareil (écouteurs : sortez-les du boîtier), ou touchez Réessayer.</string>
     <string name="try_again">Réessayer</string>
     <string name="connected">Connecté</string>
     <string name="not_connected">Non connecté</string>
+    <string name="reconnecting">Reconnexion…</string>
+    <string name="reconnecting_body">La connexion a été perdue. Tant que SoundCtrl est ouvert, il continue d\'essayer et se reconnecte dès que votre téléphone se reconnecte à l\'appareil.</string>
     <string name="refresh">Actualiser</string>
     <string name="disconnect">Déconnecter</string>
     <string name="forget">Oublier cet appareil</string>
@@ -207,7 +209,7 @@
     <!-- Settings -->
     <string name="group_connecting">Connexion</string>
     <string name="auto_connect">Se reconnecter au dernier appareil</string>
-    <string name="auto_connect_sub">À l\'ouverture de SoundCtrl</string>
+    <string name="auto_connect_sub">À l\'ouverture de SoundCtrl, même si l\'appareil se connecte à votre téléphone plus tard</string>
     <string name="forget_all">Oublier tous les appareils</string>
     <string name="forget_all_body">SoundCtrl retire tous les appareils de sa liste. Rien ne change sur les appareils.</string>
     <string name="connecting_footer">SoundCtrl communique avec un appareil à la fois en Bluetooth Low Energy. Les photos de produits, PersoniFi, les comptes JBL et le cloud de Harman ne font pas partie de SoundCtrl.</string>

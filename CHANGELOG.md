@@ -4,6 +4,24 @@ What changed in each SoundCtrl release. Every release on the [Releases page](htt
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+Built and checked by CI only: nothing in this release had been run on a phone when it was published.
+
+### Fixed
+
+- **Tour Pro 3: Ambient Aware and TalkThru were swapped.** On a real Tour Pro 3, choosing Ambient Aware in SoundCtrl 0.5.1 turned on TalkThru on the earbuds, and choosing TalkThru turned on Ambient Aware. The numbers SoundCtrl sends for these two modes came from reading the JBL app's code, and that reading turned out to be the wrong way round for this model. For the Tour Pro 3 SoundCtrl now sends them the other way round, and reads the current mode back the same way, so the selected mode on the device page matches what you hear (also when the earbuds report a change themselves, for example after you use the touch controls). Other Airoha models (Live Buds 3, Tune 770NC, …) keep the old order, because it hasn't been checked on them yet; please report it if those are swapped too.
+
+### New
+
+- **SoundCtrl reconnects by itself.** Until now, if the connection dropped (earbuds back in the case and out again, Bluetooth switched off and on, phone out of range), the device stayed disconnected until you opened it again, and "Reconnect to the last device" tried only once when SoundCtrl started. Now:
+  - While a device page is open and the connection drops, the page shows **Reconnecting…** instead of an error, and SoundCtrl tries again after 2, 5 and 10 seconds and then every 30 seconds. As soon as your phone itself connects to the device again (Android reports it), SoundCtrl connects at once instead of waiting for the next try. A **Disconnect** button on that page stops it.
+  - If the device can't be reached when you open it (for example the earbuds are still in the case), the "Couldn't connect" page now says SoundCtrl will connect by itself, and it does so as soon as your phone connects to the device. **Try again** still tries at once. This also covers **Reconnect to the last device** when SoundCtrl starts.
+  - Each reconnection starts a completely new connection and reads everything again (for Airoha earbuds: the chip, the status updates and all settings), the same as when you open the device. It works for every kind of device: earbuds and headphones over classic Bluetooth, and speakers and headphones over Bluetooth Low Energy.
+  - It only happens while SoundCtrl is open on screen. There is no background service, no new permission (the existing "Nearby devices" permission is enough, still no location), and SoundCtrl stops listening for Bluetooth connections when you leave the app. Coming back to SoundCtrl tries again at once.
+  - Not while a firmware update is being sent: then SoundCtrl waits until the update is over before reconnecting. **Disconnect** (and Forget) still ends the connection for good.
+  - Translated into Dutch, French and German.
+
 ## v0.5.1 (2026-11-22)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published.

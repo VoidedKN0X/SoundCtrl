@@ -31,10 +31,12 @@
     <!-- Device -->
     <string name="connecting">Verbinden…</string>
     <string name="connect_failed">Verbindung fehlgeschlagen</string>
-    <string name="connect_failed_body">Achte darauf, dass das Gerät eingeschaltet, in der Nähe und nicht mit der JBL-App auf einem anderen Smartphone verbunden ist, und versuche es dann erneut.</string>
+    <string name="connect_failed_body">Achte darauf, dass das Gerät eingeschaltet, in der Nähe und nicht mit der JBL-App auf einem anderen Smartphone verbunden ist. SoundCtrl verbindet sich von selbst, sobald sich dein Smartphone mit dem Gerät verbindet (Ohrhörer: nimm sie aus dem Case), oder tippe auf Erneut versuchen.</string>
     <string name="try_again">Erneut versuchen</string>
     <string name="connected">Verbunden</string>
     <string name="not_connected">Nicht verbunden</string>
+    <string name="reconnecting">Erneut verbinden…</string>
+    <string name="reconnecting_body">Die Verbindung ist abgebrochen. Solange SoundCtrl geöffnet ist, versucht es weiter und verbindet sich sofort, wenn sich dein Smartphone wieder mit dem Gerät verbindet.</string>
     <string name="refresh">Aktualisieren</string>
     <string name="disconnect">Trennen</string>
     <string name="forget">Dieses Gerät vergessen</string>
@@ -207,7 +209,7 @@
     <!-- Settings -->
     <string name="group_connecting">Verbindung</string>
     <string name="auto_connect">Mit dem letzten Gerät neu verbinden</string>
-    <string name="auto_connect_sub">Wenn SoundCtrl geöffnet wird</string>
+    <string name="auto_connect_sub">Wenn SoundCtrl geöffnet wird, auch wenn sich das Gerät erst später mit deinem Smartphone verbindet</string>
     <string name="forget_all">Alle Geräte vergessen</string>
     <string name="forget_all_body">SoundCtrl entfernt alle Geräte aus seiner Liste. An den Geräten ändert sich nichts.</string>
     <string name="connecting_footer">SoundCtrl spricht über Bluetooth Low Energy immer nur mit einem Gerät. Produktbilder, PersoniFi, JBL-Konten und die Cloud von Harman sind nicht Teil von SoundCtrl.</string>

@@ -100,11 +100,18 @@ fun DeviceScreen(address: String) {
     Column(Modifier.fillMaxSize()) {
         ScreenTopBar(st.name ?: st.product?.name ?: address)
         when {
+            // The link dropped: the session connects again by itself (retries, and at once when the phone connects).
+            st.reconnecting -> MessageView(
+                Icons.Outlined.BluetoothSearching, stringResource(R.string.reconnecting), stringResource(R.string.reconnecting_body),
+                actionLabel = stringResource(R.string.disconnect),
+                onAction = { c.devices.disconnect(); nav.back() },
+            )
             st.connecting -> MessageView(Icons.Outlined.BluetoothSearching, stringResource(R.string.connecting))
+            // The first connection failed: the session waits for the phone to connect to the device.
             st.failed -> MessageView(
                 Icons.Outlined.LinkOff, stringResource(R.string.connect_failed), stringResource(R.string.connect_failed_body),
                 actionLabel = stringResource(R.string.try_again),
-                onAction = { c.devices.disconnect(); c.devices.open(address, st.pid, true) },
+                onAction = { s.wake() },
             )
             else -> DeviceBody(s, st, onUpdate = { nav.navigate(UpdateRoute(address)) }, onGone = { nav.back() })
         }

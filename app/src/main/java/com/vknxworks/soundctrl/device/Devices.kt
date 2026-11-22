@@ -1,12 +1,19 @@
 package com.vknxworks.soundctrl.device
 
 import android.annotation.SuppressLint
+import android.bluetooth.BluetoothA2dp
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothHeadset
 import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.ParcelUuid
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -293,19 +300,24 @@ class Devices(private val context: Context, private val scope: CoroutineScope) {
     private val _session = MutableStateFlow<DeviceSession?>(null)
     val session: StateFlow<DeviceSession?> = _session
 
-    /** Opens (or reuses) the connection to [address]. Only one device is connected at a time. */
+    /** Is SoundCtrl on screen? Sessions only retry while it is ([setForeground]). */
+    private val foreground = MutableStateFlow(false)
+
+    /**
+     * Opens (or reuses) the connection to [address]. Only one device is connected at a time. A session that is
+     * waiting for its device tries again at once.
+     */
     fun open(address: String, pid: String?, le: Boolean): DeviceSession {
-        _session.value?.let { if (it.address == address) return it }
+        _session.value?.let { if (it.address == address) { it.wake(); return it } }
         _session.value?.let { if (it.updating) return it else it.close() }
         stopScan()
-        val s = DeviceSession(context, address, pid, le)
-        _session.value = s
-        scope.launch {
-            if (s.start()) {
-                val st = s.state.value
-                remember(rememberedFrom(address, st, le))
-            }
+        lateinit var s: DeviceSession
+        s = DeviceSession(context, address, pid, le, foreground) { st ->
+            // After every (re)connection: keep the remembered entry current. Not for a session closed meanwhile.
+            if (_session.value === s) remember(rememberedFrom(address, st, le))
         }
+        _session.value = s
+        s.start()
         return s
     }
 
@@ -314,6 +326,64 @@ class Devices(private val context: Context, private val scope: CoroutineScope) {
         if (s.updating) return
         s.close()
         _session.value = null
+    }
+
+    /**
+     * Called when SoundCtrl comes to the foreground and when it leaves it. While it is in the foreground, a
+     * receiver listens for the phone connecting to a device (ACL link, A2DP or headset profile); the open session
+     * for that device then connects at once. Nothing listens while SoundCtrl is in the background.
+     */
+    fun setForeground(on: Boolean) {
+        if (foreground.value == on) return
+        foreground.value = on
+        if (on) {
+            registerConnectionReceiver()
+            _session.value?.wake()
+        } else {
+            unregisterConnectionReceiver()
+        }
+    }
+
+    private var receiverRegistered = false
+
+    private val connectionReceiver = object : BroadcastReceiver() {
+        override fun onReceive(c: Context, intent: Intent) {
+            val connected = when (intent.action) {
+                BluetoothDevice.ACTION_ACL_CONNECTED -> true
+                BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED, BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED ->
+                    intent.getIntExtra(BluetoothProfile.EXTRA_STATE, -1) == BluetoothProfile.STATE_CONNECTED
+                else -> false
+            }
+            if (!connected) return
+            val device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java) ?: return
+            val s = _session.value ?: return
+            if (device.address.equals(s.address, ignoreCase = true)) s.wake()
+        }
+    }
+
+    private fun registerConnectionReceiver() {
+        if (receiverRegistered) return
+        val filter = IntentFilter().apply {
+            addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
+            addAction(BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED)
+            addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED)
+        }
+        try {
+            // Protected system broadcasts (only the Bluetooth stack can send them), delivered with BLUETOOTH_CONNECT.
+            // RECEIVER_EXPORTED because they come from the Bluetooth process, not from SoundCtrl itself.
+            context.registerReceiver(connectionReceiver, filter, Context.RECEIVER_EXPORTED)
+            receiverRegistered = true
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun unregisterConnectionReceiver() {
+        if (!receiverRegistered) return
+        receiverRegistered = false
+        try {
+            context.unregisterReceiver(connectionReceiver)
+        } catch (_: Exception) {
+        }
     }
 
     companion object {

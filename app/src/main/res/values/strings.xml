@@ -29,10 +29,12 @@
     <!-- Device -->
     <string name="connecting">Connecting…</string>
     <string name="connect_failed">Couldn\'t connect</string>
-    <string name="connect_failed_body">Make sure the device is on, close by and not connected to the JBL app on another phone, then try again.</string>
+    <string name="connect_failed_body">Make sure the device is on, close by and not connected to the JBL app on another phone. SoundCtrl connects by itself as soon as your phone connects to it (for earbuds: take them out of the case), or tap Try again.</string>
     <string name="try_again">Try again</string>
     <string name="connected">Connected</string>
     <string name="not_connected">Not connected</string>
+    <string name="reconnecting">Reconnecting…</string>
+    <string name="reconnecting_body">The connection was lost. While SoundCtrl is open it keeps trying, and connects at once when your phone connects to the device again.</string>
     <string name="refresh">Refresh</string>
     <string name="disconnect">Disconnect</string>
     <string name="forget">Forget this device</string>
@@ -205,7 +207,7 @@
     <!-- Settings -->
     <string name="group_connecting">Connecting</string>
     <string name="auto_connect">Reconnect to the last device</string>
-    <string name="auto_connect_sub">When SoundCtrl opens</string>
+    <string name="auto_connect_sub">When SoundCtrl opens, also if the device connects to your phone later</string>
     <string name="forget_all">Forget all devices</string>
     <string name="forget_all_body">SoundCtrl removes every device from its list. Nothing on the devices changes.</string>
     <string name="connecting_footer">SoundCtrl talks to one device at a time over Bluetooth Low Energy. Product pictures, PersoniFi, JBL accounts and Harman\'s cloud are not part of SoundCtrl.</string>

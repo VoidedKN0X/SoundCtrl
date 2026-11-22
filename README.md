@@ -64,8 +64,9 @@ SoundCtrl knows every model in the JBL apps' own lists (about 160). What it can 
 - **Allow nearby devices** when asked, and turn Bluetooth on.
 - **Look for devices:** switch your JBL device on. Headphones already paired with the phone show up straight away. Tap one to connect.
 - **A device:** battery and firmware at the top, then its settings. **Refresh** reads everything again, **Disconnect** frees it for another phone.
+- **Reconnecting:** while SoundCtrl is open it stays with the device you opened. If the connection drops (earbuds back in the case, Bluetooth switched off, out of range), the device page shows **Reconnecting…** and SoundCtrl tries again after 2, 5 and 10 seconds and then every 30 seconds, and at once when your phone connects to the device again. If a device can't be reached when you open it, SoundCtrl waits and connects as soon as your phone connects to it. Only **Disconnect** stops this. Nothing runs in the background: when SoundCtrl is closed it doesn't try.
 - **Firmware update** (on the device page): **Check for update**, then **Download**, then **Install**. Read the warning first: firmware writing has not been tested on a real device yet.
-- **Settings** (profile picture): reconnect to the last device when SoundCtrl opens, forget devices, privacy and the settings file.
+- **Settings** (profile picture): **Reconnect to the last device** opens the last device when SoundCtrl starts, and waits for it if it isn't connected to your phone yet (for earbuds: take them out of the case); forget devices, privacy and the settings file.
 
 Close the JBL app on other phones first: a device usually talks to one app at a time.
 

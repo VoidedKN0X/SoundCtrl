@@ -26,6 +26,8 @@ import com.vknxworks.soundctrl.proto.SpeakerInfoParser
 import com.vknxworks.soundctrl.proto.SpeakerP4
 import com.vknxworks.soundctrl.proto.hex
 import com.vknxworks.soundctrl.proto.u8
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -34,6 +36,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -52,7 +55,10 @@ data class DeviceState(
     val address: String,
     val connected: Boolean = false,
     val connecting: Boolean = true,
+    /** The first connection failed; SoundCtrl waits for the phone to connect to the device (or a tap on Try again). */
     val failed: Boolean = false,
+    /** The device was connected and the link dropped (not by the user): SoundCtrl is connecting again. */
+    val reconnecting: Boolean = false,
     val name: String? = null,
     val pid: String? = null,
     val product: Product? = null,
@@ -107,13 +113,30 @@ data class RaceFailure(val kind: Kind, val id: Int, val status: Int = 0, val hex
     enum class Kind { NOT_SENT, NO_ANSWER, REFUSED, UNEXPECTED }
 }
 
-/** One connected JBL device. All protocol traffic for it goes through here. */
-class DeviceSession(context: Context, val address: String, knownPid: String?, val le: Boolean) {
+/**
+ * One connected JBL device. All protocol traffic for it goes through here.
+ *
+ * The session keeps itself connected until [close]: when the first connection fails it waits for [wake] (the
+ * phone reports the device connected, the app comes back to the foreground, or Try again); when an open link
+ * drops it connects again after 2 s, 5 s, 10 s and then every 30 s while the app is in the foreground
+ * ([foreground]), and at once on [wake]. Never while a firmware update runs ([updating]). Every attempt builds a
+ * new link (sockets and GATT connections can't be reused) and runs the whole identify/refresh sequence again.
+ * [onReady] is called after each successful connection and refresh.
+ */
+class DeviceSession(
+    context: Context,
+    val address: String,
+    knownPid: String?,
+    val le: Boolean,
+    private val foreground: StateFlow<Boolean> = MutableStateFlow(true),
+    private val onReady: (DeviceState) -> Unit = {},
+) {
     private val appContext = context.applicationContext
-    /** BLE GATT, or classic RFCOMM for Airoha devices (picked in [start]). */
-    var link: DeviceLink = GattLink(appContext, address)
+    /** BLE GATT, or classic RFCOMM for Airoha devices (picked in [connectOnce]). A new one for every connection. */
+    @Volatile var link: DeviceLink = GattLink(appContext, address)
         private set
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    /** A failure in one of the session's jobs must never close the app. */
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, _ -> })
     private val _state = MutableStateFlow(DeviceState(address, pid = knownPid, product = Catalog.find(knownPid)))
     val state: StateFlow<DeviceState> = _state
 
@@ -125,6 +148,10 @@ class DeviceSession(context: Context, val address: String, knownPid: String?, va
     /** Whole RACE frames from an Airoha device. */
     val raceFrames: SharedFlow<ByteArray> = _race
     private var reader: Job? = null
+    private var runner: Job? = null
+    @Volatile private var closed = false
+    /** "Try now": the phone connected to the device, the app came back, or the user tapped Try again. */
+    private val wakeUp = Channel<Unit>(Channel.CONFLATED)
 
     /** Why the last Airoha setting failed (null after a success). Read by the device screen for its message. */
     @Volatile var lastRaceFailure: RaceFailure? = null
@@ -132,33 +159,109 @@ class DeviceSession(context: Context, val address: String, knownPid: String?, va
 
     fun clearRaceFailure() { lastRaceFailure = null }
 
-    /** Blocks setting changes while an update runs. */
+    /** Blocks setting changes while an update runs. Also holds off reconnecting until the update is over. */
     @Volatile var updating = false
 
-    suspend fun start(): Boolean {
-        _state.update { it.copy(connecting = true, failed = false) }
+    /** Starts connecting; the session then keeps the device connected until [close]. */
+    fun start() {
+        if (runner != null || closed) return
+        runner = scope.launch { keepConnected() }
+    }
+
+    /** Try to connect now, if the device isn't connected (no effect while it is). */
+    fun wake() {
+        if (!closed && !_state.value.connected) wakeUp.trySend(Unit)
+    }
+
+    fun close() {
+        closed = true
+        scope.cancel()
+        link.close()
+    }
+
+    private suspend fun keepConnected() {
+        var everConnected = false
+        var attempt = 0
+        while (!closed) {
+            if (!everConnected) _state.update { it.copy(connecting = true, failed = false) }
+            val ok = try {
+                connectOnce()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // A Bluetooth call that threw (permission taken away, adapter gone): counts as a failed attempt.
+                link.close()
+                false
+            }
+            if (ok) {
+                everConnected = true
+                attempt = 0
+                // Wait until the link drops; a drop while connecting and refreshing is seen here at once.
+                val l = link
+                l.connected.first { !it }
+                if (closed) return
+                reader?.cancel()
+                l.close()
+                _state.update { it.copy(connected = false, reconnecting = true, ringingLeft = false, ringingRight = false) }
+                // Wake-ups that came while connected (the phone's own profile connections) are stale now.
+                while (wakeUp.tryReceive().isSuccess) { /* drain */ }
+            } else if (!everConnected) {
+                _state.update { it.copy(connecting = false, failed = true, connected = false) }
+            }
+            waitForNextTry(timer = everConnected, attempt)
+            attempt++
+        }
+    }
+
+    /**
+     * Waits before the next attempt: until [wake], or (after a drop, [timer]) 2 s, 5 s, 10 s and then 30 s. Only
+     * in the foreground, and never while a firmware update runs; coming back to the foreground tries at once.
+     */
+    private suspend fun waitForNextTry(timer: Boolean, attempt: Int) {
+        while (!closed) {
+            if (updating) {
+                delay(1_000)
+                continue
+            }
+            if (!foreground.value) {
+                foreground.first { it }
+                while (wakeUp.tryReceive().isSuccess) { /* drain */ }
+                return
+            }
+            if (timer) withTimeoutOrNull(RETRY_DELAYS_MS.getOrElse(attempt) { RETRY_EVERY_MS }) { wakeUp.receive() }
+            else wakeUp.receive()
+            if (updating || !foreground.value) continue
+            return
+        }
+    }
+
+    /** One connection attempt with a fresh link, then the identify/init sequence and a refresh. */
+    private suspend fun connectOnce(): Boolean {
         var ok = false
         // Airoha earbuds (Tour Pro 3 and others) are controlled over classic Bluetooth by the JBL app: try Airoha's
         // RFCOMM service first for them, and for paired devices whose model isn't known yet. BLE GATT otherwise.
         val known = _state.value.product
-        if (known?.control == Control.HP_AIROHA || (known == null && !le)) {
+        // A device that was reached over RFCOMM before is reached the same way again (no GATT fallback then).
+        val wasClassic = _state.value.classic
+        if (known?.control == Control.HP_AIROHA || (known == null && !le) || wasClassic) {
             val spp = SppLink(appContext, address)
             if (spp.connect()) {
                 link = spp
                 ok = true
-                _state.update { it.copy(classic = true) }
             }
         }
-        if (!ok) {
+        val classic = ok
+        if (!ok && !wasClassic) {
             val gatt = GattLink(appContext, address)
             link = gatt
             ok = gatt.connect(le)
             if (!ok && le) ok = gatt.connect(false)
         }
-        if (!ok) {
-            _state.update { it.copy(connecting = false, failed = true, connected = false) }
+        if (closed) {
+            link.close()
             return false
         }
+        if (!ok) return false
         reader?.cancel()
         val assembler = P4Assembler()
         val raceAssembler = RaceAssembler()
@@ -170,16 +273,16 @@ class DeviceSession(context: Context, val address: String, knownPid: String?, va
                 else assembler.accept(b)?.let { _p4.tryEmit(it) }
             }
         }
-        scope.launch { l.connected.collect { c -> _state.update { it.copy(connected = c) } } }
-        _state.update { it.copy(connected = true, connecting = false, mtu = link.mtu) }
+        while (wakeUp.tryReceive().isSuccess) { /* drain */ }
+        _state.update {
+            it.copy(connected = true, connecting = false, failed = false, reconnecting = false, classic = classic, mtu = l.mtu,
+                ringingLeft = false, ringingRight = false)
+        }
         detectControl()
         refresh()
+        if (!l.connected.value) return true // dropped during the refresh: keepConnected sees it and tries again
+        onReady(_state.value)
         return true
-    }
-
-    fun close() {
-        link.close()
-        scope.cancel()
     }
 
     // ---------- request helpers ----------
@@ -426,7 +529,7 @@ class DeviceSession(context: Context, val address: String, knownPid: String?, va
         }
         if (basics) refreshAirohaBattery(partner)
         if (_state.value.airohaSettings) {
-            race(Race.getNoise()) { Race.parseNoise(it) }?.let { m -> _state.update { it.copy(noise = m) } }
+            race(Race.getNoise()) { Race.parseNoise(it, _state.value.pid) }?.let { m -> _state.update { it.copy(noise = m) } }
             race(Race.getCommonConfig(Race.MODULE_AUTO_POWER_OFF)) { Race.parseAutoOff(it) }?.let { v -> _state.update { it.copy(autoOff = v) } }
             race(Race.getCommonConfig(Race.MODULE_IN_EAR_PLAY_PAUSE)) { Race.parseInEarPlayPause(it) }?.let { v -> _state.update { it.copy(inEarPlayPause = v) } }
         }
@@ -470,8 +573,8 @@ class DeviceSession(context: Context, val address: String, knownPid: String?, va
             }
             Control.HP_AA -> aaAck(Aa.hpSetAnc(mode == NoiseMode.ANC), Aa.HP_SET_ANC)
             // The reply to 0E06, or the device's status push (5B/5D 0901) showing the new mode, counts as done.
-            Control.HP_AIROHA -> s.airohaSettings && raceSet(Race.setNoise(mode), Race.ANC_ON_OFF) { b ->
-                Race.parseSetNoise(b, mode) ?: Race.parseNoise(b)?.takeIf { it == mode }?.let { true }
+            Control.HP_AIROHA -> s.airohaSettings && raceSet(Race.setNoise(mode, s.pid), Race.ANC_ON_OFF) { b ->
+                Race.parseSetNoise(b, mode) ?: Race.parseNoise(b, s.pid)?.takeIf { it == mode }?.let { true }
             }
             else -> false
         }
@@ -553,4 +656,10 @@ class DeviceSession(context: Context, val address: String, knownPid: String?, va
     /** `AA 4A` -> `AA 4B`: the version of an image the speaker already holds (part of). */
     suspend fun speakerDfuVersion(): String? =
         request(aaFrames, listOf(SpeakerDfuCommands.reqDfuVersion())) { f -> if (f.cmd == Aa.RET_DFU_VERSION) SpeakerDfuCommands.parseDfuVersion(f.payload) else null }
+
+    private companion object {
+        /** Waits before the first reconnect attempts after a drop; then every [RETRY_EVERY_MS]. */
+        val RETRY_DELAYS_MS = longArrayOf(2_000, 5_000, 10_000)
+        const val RETRY_EVERY_MS = 30_000L
+    }
 }
