@@ -5,7 +5,10 @@
     <string name="app_lock_subtitle">Vraag een pincode voor de app (en eventueel je vingerafdruk) wanneer je SoundCtrl opent. Een firmware-update die bezig is, loopt gewoon door.</string>
     <string name="app_lock_footer">SoundCtrl heeft geen analytics, tracking of account. Het gaat alleen online wanneer je op Zoeken naar update tikt, en dan alleen naar de openbare bestandsserver van Harman met het product-id van je toestel. Je lijst met toestellen blijft op deze telefoon.</string>
     <string name="lock_prompt_subtitle">Je JBL-toestellen</string>
-    <string name="lock_forgot_body">De pincode kan niet worden teruggehaald. SoundCtrl vergeet zijn lijst met toestellen, zet zijn instellingen terug en zet de app-vergrendeling uit. Op je koptelefoons en speakers verandert er niets.</string>
+    <string name="lock_forgot_body">De pincode kan niet worden teruggehaald. SoundCtrl vergeet zijn lijst met toestellen, zet zijn instellingen terug en zet de app-vergrendeling uit. Op je koptelefoons en speakers verandert er niets. Als je telefoon een schermvergrendeling heeft, bevestig je eerst daarmee.</string>
+    <string name="lock_reset_prompt_title">App-vergrendeling van SoundCtrl terugzetten</string>
+    <string name="lock_reset_prompt_subtitle">Gebruik de schermvergrendeling van je telefoon om te bevestigen dat jij het bent</string>
+    <string name="lock_reset_prompt_failed">De schermvergrendeling kon niet getoond worden</string>
     <string name="devices">Toestellen</string>
     <string name="your_devices">Je toestellen</string>
     <string name="nearby">In de buurt</string>

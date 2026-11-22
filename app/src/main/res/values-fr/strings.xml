@@ -7,7 +7,10 @@
     <string name="app_lock_subtitle">Demander un code PIN (et éventuellement votre empreinte) à l\'ouverture de SoundCtrl. Une mise à jour du firmware en cours continue.</string>
     <string name="app_lock_footer">SoundCtrl n\'a ni statistiques, ni pistage, ni compte. Il ne se connecte à Internet que lorsque vous touchez Rechercher une mise à jour, et uniquement au serveur de fichiers public de Harman avec l\'identifiant produit de votre appareil. Votre liste d\'appareils reste sur ce téléphone.</string>
     <string name="lock_prompt_subtitle">Vos appareils JBL</string>
-    <string name="lock_forgot_body">Le code PIN ne peut pas être récupéré. SoundCtrl oubliera sa liste d\'appareils, réinitialisera ses paramètres et désactivera le verrouillage. Rien ne change sur vos casques ou enceintes.</string>
+    <string name="lock_forgot_body">Le code PIN ne peut pas être récupéré. SoundCtrl oubliera sa liste d\'appareils, réinitialisera ses paramètres et désactivera le verrouillage. Rien ne change sur vos casques ou enceintes. Si votre téléphone a un verrouillage d\'écran, vous confirmerez d\'abord avec celui-ci.</string>
+    <string name="lock_reset_prompt_title">Réinitialiser le verrouillage de SoundCtrl</string>
+    <string name="lock_reset_prompt_subtitle">Utilisez le verrouillage d\'écran de votre téléphone pour confirmer que c\'est bien vous</string>
+    <string name="lock_reset_prompt_failed">Impossible d\'afficher le verrouillage d\'écran</string>
 
     <!-- Devices -->
     <string name="devices">Appareils</string>

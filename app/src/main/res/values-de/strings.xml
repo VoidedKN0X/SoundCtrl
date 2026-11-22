@@ -7,7 +7,10 @@
     <string name="app_lock_subtitle">Beim Öffnen von SoundCtrl nach einer App-PIN (und optional deinem Fingerabdruck) fragen. Ein laufendes Firmware-Update läuft weiter.</string>
     <string name="app_lock_footer">SoundCtrl hat keine Analysen, kein Tracking und kein Konto. Es geht nur online, wenn du auf „Nach Update suchen“ tippst, und dann nur zum öffentlichen Dateiserver von Harman mit der Produkt-ID deines Geräts. Deine Geräteliste bleibt auf diesem Smartphone.</string>
     <string name="lock_prompt_subtitle">Deine JBL-Geräte</string>
-    <string name="lock_forgot_body">Die PIN kann nicht wiederhergestellt werden. SoundCtrl vergisst seine Geräteliste, setzt seine Einstellungen zurück und schaltet die App-Sperre aus. An deinen Kopfhörern und Lautsprechern ändert sich nichts.</string>
+    <string name="lock_forgot_body">Die PIN kann nicht wiederhergestellt werden. SoundCtrl vergisst seine Geräteliste, setzt seine Einstellungen zurück und schaltet die App-Sperre aus. An deinen Kopfhörern und Lautsprechern ändert sich nichts. Wenn dein Smartphone eine Displaysperre hat, bestätigst du zuerst damit.</string>
+    <string name="lock_reset_prompt_title">App-Sperre von SoundCtrl zurücksetzen</string>
+    <string name="lock_reset_prompt_subtitle">Bestätige mit der Displaysperre deines Smartphones, dass du es bist</string>
+    <string name="lock_reset_prompt_failed">Die Displaysperre konnte nicht angezeigt werden</string>
 
     <!-- Devices -->
     <string name="devices">Geräte</string>

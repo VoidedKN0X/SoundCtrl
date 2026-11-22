@@ -196,10 +196,17 @@ class DeviceSession(
         if (!closed && !_state.value.connected) wakeUp.trySend(Unit)
     }
 
+    /**
+     * A link whose connect is still running (not yet [link]). [close] closes it too, so a socket that connects
+     * after the session was closed doesn't stay open.
+     */
+    @Volatile private var connecting: DeviceLink? = null
+
     fun close() {
         closed = true
         scope.cancel()
         link.close()
+        connecting?.close()
     }
 
     private suspend fun keepConnected() {
@@ -268,17 +275,27 @@ class DeviceSession(
         val wasClassic = _state.value.classic
         if (known?.control == Control.HP_AIROHA || (known == null && !le) || wasClassic) {
             val spp = SppLink(appContext, address)
-            if (spp.connect()) {
-                link = spp
-                ok = true
+            connecting = spp
+            try {
+                if (spp.connect()) {
+                    link = spp
+                    ok = true
+                }
+            } finally {
+                connecting = null
             }
         }
         val classic = ok
         if (!ok && !wasClassic) {
             val gatt = GattLink(appContext, address)
             link = gatt
-            ok = gatt.connect(le)
-            if (!ok && le) ok = gatt.connect(false)
+            connecting = gatt
+            try {
+                ok = gatt.connect(le)
+                if (!ok && le) ok = gatt.connect(false)
+            } finally {
+                connecting = null
+            }
         }
         if (closed) {
             link.close()

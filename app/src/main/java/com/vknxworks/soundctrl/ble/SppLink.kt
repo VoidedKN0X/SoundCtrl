@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothSocket
 import android.content.Context
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.coroutineScope
@@ -55,19 +56,27 @@ class SppLink(private val context: Context, val address: String) : DeviceLink {
             return@withContext false
         }
         socket = s
-        val ok = coroutineScope {
-            // connect() blocks; closing the socket is the only way to give up early.
-            val watchdog = launch { delay(timeoutMs); try { s.close() } catch (_: IOException) {} }
-            val r = try {
-                s.connect()
-                true
-            } catch (e: IOException) {
-                false
-            } catch (e: SecurityException) {
-                false
+        val ok = try {
+            coroutineScope {
+                // connect() blocks; closing the socket is the only way to give up early.
+                val watchdog = launch { delay(timeoutMs); try { s.close() } catch (_: IOException) {} }
+                val r = try {
+                    s.connect()
+                    true
+                } catch (e: IOException) {
+                    false
+                } catch (e: SecurityException) {
+                    false
+                }
+                watchdog.cancel()
+                r
             }
-            watchdog.cancel()
-            r
+        } catch (e: CancellationException) {
+            // The session was closed while connecting (its watchdog went with it): a socket that still connected
+            // must not stay open, unread, holding the earbuds' RACE channel.
+            try { s.close() } catch (_: IOException) {}
+            socket = null
+            throw e
         }
         if (!ok) {
             close()

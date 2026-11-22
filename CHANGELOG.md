@@ -4,6 +4,22 @@ What changed in each SoundCtrl release. Every release on the [Releases page](htt
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+Built and checked by CI only: nothing here has been run on a phone yet. Tour Pro 3 controls, the order of connection attempts and auto reconnect are unchanged.
+
+### Fixed
+
+- **Cancelling a connection no longer leaves the earbuds' control channel open.** If you tapped Disconnect on the "Reconnecting" screen, opened another device or used "Forgot PIN?" while SoundCtrl was still connecting to earbuds over classic Bluetooth (Tour Pro 3 and other Airoha earbuds), the connection that was being set up could still complete in the background and then stay open with nobody reading it. The earbuds kept that channel busy, so the next connection (from SoundCtrl or the JBL app) could fail until Android cleaned it up. SoundCtrl now closes a connection that is still being set up when the device session ends.
+
+### Security
+
+- **"Forgot PIN?" now asks for your phone's screen lock first.** Before, anyone holding your unlocked phone could tap "Forgot PIN?" on SoundCtrl's lock screen and reset it. Now the reset first asks for your phone's own PIN, pattern, password or fingerprint. If you cancel or it fails, nothing is reset. If your phone has no screen lock at all, the reset works as before.
+
+### Project
+
+- CI now runs the unit tests on every build (`:app:testDebugUnitTest`), with a new check that both clean-up guards stay in place.
+
 ## v0.6.0 (2026-11-22)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published.

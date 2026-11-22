@@ -121,7 +121,7 @@ Turn the app lock on under **Settings > Privacy and security > App lock**. It's 
 - **Unlock with fingerprint** (optional) only accepts strong biometrics, checked by the phone's secure hardware. The PIN is still needed after the phone restarts and at least every 72 hours.
 - **The PIN is never stored.** It's stretched with 600,000 rounds of PBKDF2 and mixed with a key held in the phone's secure hardware.
 - **Wrong PINs:** after 5 tries you wait 30 seconds, doubling up to 15 minutes. Restarting the app or the phone, or changing the clock, doesn't skip the wait.
-- **Forgot your PIN?** It can't be recovered. The lock screen offers to forget SoundCtrl's device list, reset its settings and turn the lock off. Nothing on your devices changes.
+- **Forgot your PIN?** It can't be recovered. The lock screen offers to forget SoundCtrl's device list, reset its settings and turn the lock off, after you confirm with your phone's own screen lock (PIN, pattern, password or fingerprint) if it has one, so someone holding your unlocked phone can't simply reset it. Nothing on your devices changes.
 - **A firmware update keeps going** when the app locks.
 
 ## Privacy
